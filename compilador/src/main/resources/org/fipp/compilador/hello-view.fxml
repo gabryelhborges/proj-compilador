@@ -7,6 +7,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.scene.control.Button?>
 <BorderPane xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.fipp.compilador.HelloController">
     <center>
         <HBox spacing="5" style="-fx-background-color: lightgray;">
@@ -30,6 +31,8 @@
         <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: gray;" BorderPane.alignment="CENTER">
             <children>
                 <Label text="Área de erros" />
+                <TextArea fx:id="taTokens" editable="false" promptText="Tokens identificados..." wrapText="true"/>
+                <TextArea fx:id="taErros" editable="false" promptText="Erros léxicos..." wrapText="true"/>
             </children>
         </HBox>
     </bottom>
@@ -37,6 +40,7 @@
         <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: gray;" BorderPane.alignment="CENTER">
             <children>
                 <Label text="Menu Botões" />
+                <Button text="Analisar Código" onAction="#analisarCodigo"/>
             </children>
         </HBox>
     </top>
