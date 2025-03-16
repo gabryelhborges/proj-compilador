@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.fipp.compilador.HelloController">
+    <center>
+        <HBox spacing="5" style="-fx-background-color: lightgray;">
+            <ScrollPane fx:id="spNumeroLinhas" fitToHeight="true" hbarPolicy="NEVER" prefWidth="50" style="-fx-background-color: transparent;">
+                <TextArea fx:id="taNumeroLinhas" editable="false" style="-fx-background-color: #FFFF00;" wrapText="true">
+                    <font>
+                        <Font size="18.0" />
+                    </font>
+                </TextArea>
+            </ScrollPane>
+            <ScrollPane fitToHeight="true" style="-fx-background-color: transparent;">
+                <TextArea fx:id="taCodigo" promptText="Insira o código aqui..." wrapText="true">
+                    <font>
+                        <Font size="18.0" />
+                    </font>
+                </TextArea>
+            </ScrollPane>
+        </HBox>
+    </center>
+    <bottom>
+        <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: gray;" BorderPane.alignment="CENTER">
+            <children>
+                <Label text="Área de erros" />
+            </children>
+        </HBox>
+    </bottom>
+    <top>
+        <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: gray;" BorderPane.alignment="CENTER">
+            <children>
+                <Label text="Menu Botões" />
+            </children>
+        </HBox>
+    </top>
+</BorderPane>
