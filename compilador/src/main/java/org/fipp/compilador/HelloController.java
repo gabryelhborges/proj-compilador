@@ -152,6 +152,18 @@ public class HelloController {
                     return new Token("==", "t_igualdade", linhaAtual);
                 }
                 return new Token("=", "t_atribuicao", linhaAtual);
+            case '<':
+                if (posicao < codigo.length() && codigo.charAt(posicao) == '=') {
+                    posicao++;
+                    return new Token("<=", "t_menor_igual", linhaAtual);
+                }
+                return new Token("<", "t_menor", linhaAtual);
+            case '>':
+                if (posicao < codigo.length() && codigo.charAt(posicao) == '=') {
+                    posicao++;
+                    return new Token(">=", "t_maior_igual", linhaAtual);
+                }
+                return new Token(">", "t_maior", linhaAtual);
             case '+':
                 return new Token("+", "t_soma", linhaAtual);
             case '-':
@@ -168,7 +180,11 @@ public class HelloController {
                 return new Token("{", "t_abre_chave", linhaAtual);
             case '}':
                 return new Token("}", "t_fecha_chave", linhaAtual);
-            case ':':
+            case ';':
+                return new Token(";", "t_pv", linhaAtual);
+            case ',':
+                return new Token(",", "t_virgula", linhaAtual);
+            case ':': // New case for colon
                 return new Token(":", "t_dois_pontos", linhaAtual);
             default:
 
@@ -240,5 +256,13 @@ public class HelloController {
             tfCodigo.getChildren().add(t);
         }
 
+    }
+
+    public void limparTudo(ActionEvent actionEvent) {
+        taNumeroLinhas.clear();
+        taCodigo.clear();
+        tfCodigo.getChildren().clear();
+        taErros.clear();
+        taTokens.clear();
     }
 }
