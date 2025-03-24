@@ -1,55 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.TextFlow?>
 
 <BorderPane xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.fipp.compilador.HelloController">
+
     <center>
         <HBox spacing="5" style="-fx-background-color: lightgray;">
             <ScrollPane fx:id="spNumeroLinhas" fitToHeight="true" hbarPolicy="NEVER" prefWidth="50" style="-fx-background-color: transparent;">
-                <TextArea fx:id="taNumeroLinhas" editable="false" style="-fx-background-color: #FFFF00;" wrapText="true">
-                    <font>
-                        <Font size="18.0" />
-                    </font>
-                </TextArea>
+                <TextArea fx:id="taNumeroLinhas" editable="false" style="-fx-background-color: #FFFF00;" wrapText="true" />
             </ScrollPane>
+
             <ScrollPane fitToHeight="true" style="-fx-background-color: transparent;">
-<<<<<<< Updated upstream
                 <TextArea fx:id="taCodigo" promptText="Insira o código aqui..." wrapText="true">
                     <font>
                         <Font size="18.0" />
                     </font>
                 </TextArea>
-=======
-                <TextArea fx:id="taCodigo" promptText="Insira o código aqui..." wrapText="true" />
-            </ScrollPane>
-
             <ScrollPane fitToHeight="true" prefWidth="384.0" style="-fx-background-color: transparent;">
+
                 <TextFlow fx:id="tfCodigo" minWidth="382.0" prefWidth="382.0" style="-fx-background-color: white; -fx-padding: 5;" />
->>>>>>> Stashed changes
             </ScrollPane>
         </HBox>
     </center>
+
     <bottom>
-        <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: gray;" BorderPane.alignment="CENTER">
-            <children>
-                <Label text="Área de erros" />
-            </children>
+        <HBox spacing="10" style="-fx-background-color: gray;">
+            <TextArea fx:id="taTokens" editable="false" promptText="Tokens identificados..." wrapText="true" />
+            <TextArea fx:id="taErros" editable="false" promptText="Erros léxicos..." wrapText="true" />
         </HBox>
     </bottom>
+
     <top>
-<<<<<<< Updated upstream
         <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: gray;" BorderPane.alignment="CENTER">
             <children>
                 <Label text="Menu Botões" />
             </children>
-=======
         <HBox spacing="10" style="-fx-background-color: gray; padding: 10;">
-            <!-- Botão para analisar código -->
             <Button onAction="#analisarCodigo" text="">
                 <graphic>
                     <ImageView fitHeight="20.0" fitWidth="20.0">
@@ -60,7 +53,6 @@
                 </graphic>
             </Button>
 
-            <!-- Botão para limpar -->
             <Button mnemonicParsing="false" onAction="#limparTudo">
                 <graphic>
                     <ImageView fitHeight="26.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
@@ -71,7 +63,6 @@
                 </graphic>
             </Button>
 
-            <!-- ✅ Botão para salvar arquivo -->
             <Button mnemonicParsing="false" onAction="#salvarArquivo" text="">
                 <graphic>
                     <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
@@ -82,7 +73,6 @@
                 </graphic>
             </Button>
 
-            <!-- ✅ Botão para carregar arquivo -->
             <Button mnemonicParsing="false" onAction="#carregarArquivo" text="">
                 <graphic>
                     <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
@@ -91,8 +81,7 @@
                         </image>
                     </ImageView>
                 </graphic>
-            </Button>
->>>>>>> Stashed changes
+          </Button>
         </HBox>
     </top>
 </BorderPane>
