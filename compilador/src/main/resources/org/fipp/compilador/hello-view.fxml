@@ -9,6 +9,8 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.TextFlow?>
 
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.control.Label?>
 <BorderPane xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.fipp.compilador.HelloController">
 
     <center>
@@ -23,6 +25,7 @@
                         <Font size="18.0" />
                     </font>
                 </TextArea>
+            </ScrollPane>
             <ScrollPane fitToHeight="true" prefWidth="384.0" style="-fx-background-color: transparent;">
 
                 <TextFlow fx:id="tfCodigo" minWidth="382.0" prefWidth="382.0" style="-fx-background-color: white; -fx-padding: 5;" />
@@ -42,6 +45,7 @@
             <children>
                 <Label text="Menu Botões" />
             </children>
+        </HBox>
         <HBox spacing="10" style="-fx-background-color: gray; padding: 10;">
             <Button onAction="#analisarCodigo" text="">
                 <graphic>
