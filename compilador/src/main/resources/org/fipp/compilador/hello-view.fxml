@@ -18,12 +18,13 @@
             </ScrollPane>
 
             <ScrollPane fitToHeight="true" style="-fx-background-color: transparent;">
-                <!-- TextArea para entrada -->
-                <TextArea fx:id="taCodigo" promptText="Insira o código aqui..." wrapText="true" />
-            </ScrollPane>
-
+                <TextArea fx:id="taCodigo" promptText="Insira o código aqui..." wrapText="true">
+                    <font>
+                        <Font size="18.0" />
+                    </font>
+                </TextArea>
             <ScrollPane fitToHeight="true" prefWidth="384.0" style="-fx-background-color: transparent;">
-                <!-- TextFlow para saída formatada -->
+
                 <TextFlow fx:id="tfCodigo" minWidth="382.0" prefWidth="382.0" style="-fx-background-color: white; -fx-padding: 5;" />
             </ScrollPane>
         </HBox>
@@ -37,6 +38,10 @@
     </bottom>
 
     <top>
+        <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: gray;" BorderPane.alignment="CENTER">
+            <children>
+                <Label text="Menu Botões" />
+            </children>
         <HBox spacing="10" style="-fx-background-color: gray; padding: 10;">
             <Button onAction="#analisarCodigo" text="">
                 <graphic>
@@ -47,15 +52,36 @@
                     </ImageView>
                 </graphic>
             </Button>
-         <Button mnemonicParsing="false" onAction="#limparTudo">
-            <graphic>
-               <ImageView fitHeight="26.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../../../imgs/clear.png" />
-                  </image>
-               </ImageView>
-            </graphic>
-         </Button>
+
+            <Button mnemonicParsing="false" onAction="#limparTudo">
+                <graphic>
+                    <ImageView fitHeight="26.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                            <Image url="@../../../imgs/clear.png" />
+                        </image>
+                    </ImageView>
+                </graphic>
+            </Button>
+
+            <Button mnemonicParsing="false" onAction="#salvarArquivo" text="">
+                <graphic>
+                    <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                            <Image url="@../../../imgs/save.png" />
+                        </image>
+                    </ImageView>
+                </graphic>
+            </Button>
+
+            <Button mnemonicParsing="false" onAction="#carregarArquivo" text="">
+                <graphic>
+                    <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                            <Image url="@../../../imgs/load.png" />
+                        </image>
+                    </ImageView>
+                </graphic>
+          </Button>
         </HBox>
     </top>
 </BorderPane>
