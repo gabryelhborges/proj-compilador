@@ -1,0 +1,123 @@
+/* App.css */
+.app {
+  padding: 20px;
+  font-family: monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100vh;
+}
+
+.editor-container {
+  display: flex;
+  margin-bottom: 20px;
+  height: 600px; /* Altura fixa para o editor */
+}
+
+.line-numbers {
+  width: 40px;
+  background: #f0f0f0;
+  padding: 10px 5px;
+  text-align: right;
+  border-right: 1px solid #ccc;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  height: 100%; /* Ocupa a altura do editor-container */
+  overflow-y: auto; /* Adiciona rolagem vertical */
+  box-sizing: border-box;
+}
+
+.line-numbers pre {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.code-editor {
+  position: relative;
+  flex-grow: 1;
+  height: 100%; /* Ocupa a altura do editor-container */
+}
+
+.code-editor textarea {
+  width: 100%;
+  height: 100%; /* Ocupa a altura do code-editor */
+  padding: 10px;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid #ccc;
+  resize: none; /* Impede redimensionamento manual */
+  background: transparent;
+  color: transparent;
+  caret-color: black;
+  position: relative;
+  z-index: 1;
+}
+
+.code-overlay {
+  width: 100%;
+  height: 100%; /* Ocupa a altura do code-editor */
+  padding: 10px;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid #ccc;
+  background: white;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  overflow: auto;
+  pointer-events: none;
+}
+
+.code-line {
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.error-line {
+  background-color: rgba(255, 0, 0, 0.2);
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.output-container {
+  display: flex;
+  gap: 20px;
+  flex-grow: 1;
+  height: 200px;
+}
+
+.tokens, .errors {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10px;
+  overflow-y: auto;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.tokens h3, .errors h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 14px;
+}
