@@ -16,14 +16,14 @@
 
 .line-numbers {
   width: 40px;
-  background: #f0f0f0;
+  background: #bbbbbb;
   padding: 10px 5px;
   text-align: right;
   border-right: 1px solid #ccc;
   font-family: monospace;
   font-size: 14px;
   line-height: 1.5;
-  height: 100%; /* Ocupa a altura do editor-container */
+  height: 104%; /* Ocupa a altura do editor-container */
   overflow-y: auto; /* Adiciona rolagem vertical */
   box-sizing: border-box;
 }
@@ -81,17 +81,21 @@
   background-color: rgba(255, 0, 0, 0.2);
 }
 
+.sintatico { color: red; }
+.lexico { color: orange; }
+
 button {
   padding: 10px 20px;
-  background-color: #4CAF50;
+  background-color: #007bff;
   color: white;
   border: none;
+  border-radius: 4px;
   cursor: pointer;
   align-self: flex-start;
 }
 
 button:hover {
-  background-color: #45a049;
+  background-color: #0056b3;
 }
 
 .output-container {
@@ -99,6 +103,8 @@ button:hover {
   gap: 20px;
   flex-grow: 1;
   height: 200px;
+  background-color: #242424;
+  color: white;
 }
 
 .tokens, .errors {
@@ -120,4 +126,24 @@ pre {
   white-space: pre-wrap;
   font-family: monospace;
   font-size: 14px;
+}
+
+.toolbar {
+  padding: 10px;
+  background-color: #bbbbbb;
+  border-bottom: 1px solid #ddd;
+}
+
+.toolbar button {
+  margin-right: 10px;
+  padding: 8px 16px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toolbar button:hover {
+  background-color: #0056b3;
 }
