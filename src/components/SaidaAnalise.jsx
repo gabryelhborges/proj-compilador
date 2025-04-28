@@ -1,3 +1,4 @@
+// components/SaidaAnalise.jsx
 import React from 'react';
 
 const SaidaAnalise = ({ tokens, erros }) => {
@@ -16,7 +17,16 @@ const SaidaAnalise = ({ tokens, erros }) => {
         <pre>
           {Array.isArray(erros) && erros.length > 0
             ? erros.map((err, idx) => (
-                <div key={idx} className={err.includes('sintático') ? 'sintatico' : 'lexico'}>
+                <div
+                  key={idx}
+                  className={
+                    err.includes('sintático')
+                      ? 'sintatico'
+                      : err.includes('semântico')
+                      ? 'semantico'
+                      : 'lexico'
+                  }
+                >
                   {err}
                 </div>
               )).reduce((acc, curr) => [acc, '\n', curr])

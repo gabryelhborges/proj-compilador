@@ -7,6 +7,7 @@ import SaidaAnalise from './components/SaidaAnalise.jsx';
 import BotaoAnalise from './components/BotaoAnalise.jsx';
 import { analisarCodigo } from './utils/analisadorLexico.js';
 import { analisarSintatico } from './utils/analisadorSintatico.js';
+import { analisarSemantico } from './utils/analisardorSemantico.js';
 
 function App() {
   const [código, setCódigo] = useState('');
@@ -46,8 +47,10 @@ function App() {
     const errosLexicos = Array.isArray(resultadoLexico.erros) ? resultadoLexico.erros : [];
     const resultadoSintatico = analisarSintatico(novosTokens);
     const errosSintaticos = Array.isArray(resultadoSintatico.erros) ? resultadoSintatico.erros : [];
+    const resultadoSemantico = analisarSemantico(novosTokens);
+    const errosSemanticos = Array.isArray(resultadoSemantico.erros) ? resultadoSemantico.erros : [];
     setTokens(novosTokens);
-    setErros([...errosLexicos, ...errosSintaticos]);
+    setErros([...errosLexicos, ...errosSintaticos, ...errosSemanticos]);
   };
 
   // Função para abrir arquivo
