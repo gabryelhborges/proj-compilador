@@ -11,6 +11,8 @@ export const analisarSintatico = (tokens) => {
 
   const erros = [];
   let indiceToken = 0;
+  // Adicionamos o token de fim apenas para ter uma referência, mas não permitiremos
+  // que ele interrompa a análise prematuramente
   const tokensComFim = [...tokens, new Token('$', '$', tokens[tokens.length - 1]?.linha || 1)];
 
   // Função auxiliar para obter o próximo token
@@ -37,24 +39,29 @@ export const analisarSintatico = (tokens) => {
 
   // Função para sincronizar após erro
   const sincronizar = (followSet) => {
-    while (indiceToken < tokensComFim.length && !followSet.includes(tokensComFim[indiceToken].tipo)) {
+    while (indiceToken < tokens.length && !followSet.includes(tokensComFim[indiceToken].tipo)) {
       indiceToken++;
     }
   };
 
   // Funções recursivas para cada não-terminal
   function programa() {
-    const follow = ['$'];
-    while (indiceToken < tokensComFim.length && firstDeclaracao.includes(tokensComFim[indiceToken].tipo)) {
-      declaracao();
-    }
-    if (!consumir('$')) {
-      reportarErro(
-        'Tokens inesperados após o fim do programa',
-        proximoToken(),
-        'Fim do programa',
-        'Verifique se há tokens extras ou feche todas as estruturas abertas'
-      );
+    // Processar todas as declarações até o fim dos tokens reais
+    // Modificamos o loop para garantir que vamos até o último token real, ignorando o '$' artificial
+    while (indiceToken < tokens.length) {
+      if (firstDeclaracao.includes(tokensComFim[indiceToken].tipo)) {
+        declaracao();
+      } else {
+        // Se encontrarmos um token que não inicia uma declaração, reportamos erro e avançamos
+        const token = proximoToken();
+        reportarErro(
+          `Token inesperado: '${token.lexema}'`,
+          token,
+          'Programa',
+          `Esperava 'variavel', identificador, 'se', 'enquanto', 'para', 'funcao' ou 'retornar'`
+        );
+        indiceToken++;
+      }
     }
   }
 
@@ -117,7 +124,7 @@ export const analisarSintatico = (tokens) => {
           reportarErro(
             "Esperado ';' após expressão de retorno",
             proximoToken(),
-            'Instrução de retornoaccounts',
+            'Instrução de retorno',
             "Adicione ';' ao final da instrução"
           );
         }
@@ -823,7 +830,7 @@ export const analisarSintatico = (tokens) => {
         'Fator incompleto',
         null,
         'Expressão',
-        "Esperava identificador, número ou expressão entre parênteses"
+        "Esperava identificador, número, string ou expressão entre parênteses"
       );
       return;
     }
@@ -832,7 +839,9 @@ export const analisarSintatico = (tokens) => {
 
     if (consumir('t_identificador')) {
       return;
-    } else if (consumir('t_num')) {
+    } else if (consumir('t_num') || consumir('t_num_decimal')) {
+      return;
+    } else if (consumir('t_string')) {  // Add support for string literals
       return;
     } else if (consumir('t_abre_par')) {
       if (indiceToken < tokensComFim.length && firstExpressao.includes(tokensComFim[indiceToken].tipo)) {
@@ -856,10 +865,10 @@ export const analisarSintatico = (tokens) => {
       }
     } else {
       reportarErro(
-        "Esperado identificador, número ou '('",
+        "Esperado identificador, número, string ou '('",
         tokenAtual,
         'Expressão',
-        "Use um identificador, número ou expressão entre parênteses"
+        "Use um identificador, número, string ou expressão entre parênteses"
       );
       sincronizar(follow);
     }
@@ -947,7 +956,7 @@ export const analisarSintatico = (tokens) => {
   // Conjuntos FIRST para guiar a análise
   const firstDeclaracao = ['t_variavel', 't_identificador', 't_se', 't_enquanto', 't_para', 't_funcao', 't_retornar'];
   const firstListaParametros = ['t_identificador'];
-  const firstExpressao = ['t_identificador', 't_num', 't_abre_par'];
+  const firstExpressao = ['t_identificador', 't_num', 't_num_decimal', 't_string', 't_abre_par'];
   const firstOperadorRelacional = ['t_menor', 't_maior', 't_igualdade', 't_menor_igual', 't_maior_igual'];
 
   // Iniciar análise

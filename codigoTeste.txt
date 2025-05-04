@@ -1,7 +1,8 @@
 variavel x: inteiro = 5;
-funcao soma(a: inteiro, b: inteiro) {
-  retornar a + b;
-}
+variavel y: inteiro;
+
+y = y + 1;
+
 se (x > 0) {
   x = x - 1;
 }

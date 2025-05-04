@@ -72,17 +72,102 @@
   pointer-events: none;
 }
 
-.code-line {
+.linha-codigo {
   line-height: 1.5;
   white-space: pre;
+  position: relative;
 }
 
-.error-line {
+/* Cores para linhas com erros no editor */
+.linha-erro-lexico {
+  background-color: rgba(255, 165, 0, 0.2);
+  border-left: 3px solid orange;
+}
+
+.linha-erro-sintatico {
   background-color: rgba(255, 0, 0, 0.2);
+  border-left: 3px solid red;
 }
 
-.sintatico { color: red; }
-.lexico { color: orange; }
+.linha-erro-semantico {
+  background-color: rgba(255, 0, 255, 0.2);
+  border-left: 3px solid magenta;
+}
+
+/* Cores para tipos de erro na saída */
+.erro-lexico {
+  color: orange;
+  padding: 2px 0;
+}
+
+.erro-sintatico {
+  color: red;
+  padding: 2px 0;
+}
+
+.erro-semantico {
+  color: magenta;
+  padding: 2px 0;
+}
+
+.erro-generico {
+  color: yellow;
+  padding: 2px 0;
+}
+
+/* Legenda de erros */
+.legenda-erros {
+  display: flex;
+  gap: 10px;
+  padding: 5px 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #444;
+}
+
+.erro-lexico-legenda {
+  color: orange;
+  display: flex;
+  align-items: center;
+}
+
+.erro-lexico-legenda::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  background-color: orange;
+}
+
+.erro-sintatico-legenda {
+  color: red;
+  display: flex;
+  align-items: center;
+}
+
+.erro-sintatico-legenda::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  background-color: red;
+}
+
+.erro-semantico-legenda {
+  color: magenta;
+  display: flex;
+  align-items: center;
+}
+
+.erro-semantico-legenda::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  background-color: magenta;
+}
 
 button {
   padding: 10px 20px;
@@ -92,6 +177,8 @@ button {
   border-radius: 4px;
   cursor: pointer;
   align-self: flex-start;
+  display: flex;
+  align-items: center;
 }
 
 button:hover {
@@ -100,23 +187,61 @@ button:hover {
 
 .output-container {
   display: flex;
-  gap: 20px;
+  flex-direction: column;
   flex-grow: 1;
-  height: 200px;
+  height: 300px;  /* Aumentado para acomodar a tabela */
   background-color: #242424;
   color: white;
 }
 
-.tokens, .errors {
-  flex: 1;
-  border: 1px solid #ccc;
-  padding: 10px;
-  overflow-y: auto;
-  height: 100%;
-  box-sizing: border-box;
+/* Estilo para as abas */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #444;
 }
 
-.tokens h3, .errors h3 {
+.tabs button {
+  padding: 8px 16px;
+  margin: 0;
+  background-color: #333;
+  border: none;
+  border-radius: 0;
+  color: #aaa;
+  position: relative;
+}
+
+.tabs button.active {
+  background-color: #444;
+  color: white;
+  border-bottom: 2px solid #007bff;
+}
+
+/* Badge para contagem de itens nas abas */
+.badge {
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  padding: 2px 6px;
+  margin-left: 5px;
+}
+
+.error-badge {
+  background-color: #ff3333;
+}
+
+.tab-content {
+  flex: 1;
+  overflow: auto;
+  padding: 10px;
+}
+
+.tokens, .errors, .symbols {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.tokens h3, .errors h3, .symbols h3 {
   margin-top: 0;
   margin-bottom: 10px;
 }
@@ -128,20 +253,45 @@ pre {
   font-size: 14px;
 }
 
+/* Estilo para tabela de símbolos */
+.symbol-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  color: white;
+}
+
+.symbol-table th, .symbol-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border: 1px solid #444;
+}
+
+.symbol-table th {
+  background-color: #333;
+  font-weight: bold;
+}
+
+.symbol-table tr:nth-child(even) {
+  background-color: #2a2a2a;
+}
+
 .toolbar {
   padding: 10px;
   background-color: #bbbbbb;
   border-bottom: 1px solid #ddd;
+  display: flex;
+  gap: 10px;
 }
 
 .toolbar button {
-  margin-right: 10px;
   padding: 8px 16px;
   border: none;
   background-color: #007bff;
   color: white;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .toolbar button:hover {

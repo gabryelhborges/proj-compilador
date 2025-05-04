@@ -1,17 +1,35 @@
 import React, { useState } from 'react';
 
-const BotaoAnalise = ({ onClick }) => {
+const BotaoAnalise = ({ onClick, disabled = false }) => {
   const [analisando, setAnalisando] = useState(false);
 
   const handleClick = async () => {
+    if (disabled || analisando) return;
+    
     setAnalisando(true);
-    await onClick();
-    setAnalisando(false);
+    try {
+      await onClick();
+    } catch (error) {
+      console.error("Erro na análise:", error);
+    } finally {
+      setAnalisando(false);
+    }
   };
 
   return (
-    <button onClick={handleClick} disabled={analisando}>
-      {analisando ? 'Analisando...' : '▶ Analisar'}
+    <button 
+      onClick={handleClick} 
+      disabled={disabled || analisando} 
+      className={analisando ? 'btn-analisando' : ''}
+    >
+      {analisando ? (
+        <>
+          <span className="spinner"></span>
+          Analisando...
+        </>
+      ) : (
+        <>▶ Analisar</>
+      )}
     </button>
   );
 };
