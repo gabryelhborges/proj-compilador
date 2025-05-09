@@ -56,7 +56,10 @@ export const gerarCodigoIntermediario = (tokens, tabelaSimbolos) => {
         // Processa expressões simples (sem operadores compostos por enquanto)
         if (['t_num', 't_num_decimal', 't_string', 't_identificador'].includes(tokens[i].tipo)) {
           const valorExpr = tokens[i].lexema;
-          codigoIntermediario.push(`${identificador.lexema} = ${valorExpr}`);
+          codigoIntermediario.push(`${identificador.lexema} = ${valorExpr}`); // Inicializa corretamente
+          i++; // Avança após o valor inicial
+        } else {
+          erros.push(`Erro: Valor inválido para inicialização de ${identificador.lexema}`);
         }
       } else {
         // Declaração sem inicialização
@@ -64,14 +67,14 @@ export const gerarCodigoIntermediario = (tokens, tabelaSimbolos) => {
         i += 2; // Pula para depois do tipo
       }
     }
-    
+
     // Atribuição simples
     else if (token.tipo === 't_identificador' && i + 2 < tokens.length && tokens[i + 1].tipo === 't_atribuicao') {
       const identificador = token.lexema;
       const expInicial = i + 2;
       let expFinal = expInicial;
       let tempVars = [];
-      
+
       // Encontrar o final da expressão (até o ponto-e-vírgula)
       while (expFinal < tokens.length && tokens[expFinal].tipo !== 't_pv') {
         expFinal++;
@@ -84,56 +87,32 @@ export const gerarCodigoIntermediario = (tokens, tabelaSimbolos) => {
         i = expFinal; // Avança até o ponto-e-vírgula
         continue;
       }
-      
+
       // Processa expressões mais complexas
       let j = expInicial;
+      let tempVarAtual = null; // Variável temporária para armazenar o resultado intermediário
       while (j < expFinal) {
-        // Expressão entre parênteses
-        if (tokens[j].tipo === 't_abre_par') {
-          const inicioParenteses = j;
-          let contadorPar = 1;
-          j++;
-          
-          // Encontra o fechamento do parêntese
-          while (j < expFinal && contadorPar > 0) {
-            if (tokens[j].tipo === 't_abre_par') contadorPar++;
-            if (tokens[j].tipo === 't_fecha_par') contadorPar--;
-            j++;
-          }
-          
-          const fimParenteses = j - 1;
-          if (fimParenteses > inicioParenteses + 1) {
-            const tempVar = gerarTemp();
-            // Processamento da expressão dentro dos parênteses (recursivamente)
-            // Simplificação: apenas atribuição do conteúdo a uma var temporária
-            codigoIntermediario.push(`${tempVar} = (expressão complexa em parênteses)`);
-            tempVars.push(tempVar);
-          }
-        }
         // Expressão com operador binário
-        else if (j + 2 < expFinal && ehOperador(tokens[j + 1].tipo)) {
-          const operando1 = tokens[j].lexema;
+        if (j + 2 < expFinal && ehOperador(tokens[j + 1].tipo)) {
+          const operando1 = tempVarAtual || tokens[j].lexema; // Usa o resultado anterior ou o operando atual
           const operador = converterOperador(tokens[j + 1].tipo);
           const operando2 = tokens[j + 2].lexema;
-          const tempVar = gerarTemp();
-          codigoIntermediario.push(`${tempVar} = ${operando1} ${operador} ${operando2}`);
-          tempVars.push(tempVar);
-          j += 3;
-        }
-        // Outros casos
-        else {
+          tempVarAtual = gerarTemp();
+          codigoIntermediario.push(`${tempVarAtual} = ${operando1} ${operador} ${operando2}`);
+          j += 2; // Avança para o próximo operador
+        } else {
           j++;
         }
       }
 
       // Atribuição do resultado final
-      if (tempVars.length > 0) {
-        codigoIntermediario.push(`${identificador} = ${tempVars[tempVars.length - 1]}`);
+      if (tempVarAtual) {
+        codigoIntermediario.push(`${identificador} = ${tempVarAtual}`);
       }
-      
+
       i = expFinal; // Avança até o ponto-e-vírgula
     }
-    
+
     // Estrutura condicional (if-else)
     else if (token.tipo === 't_se') {
       const rotuloPulaElse = gerarRotulo();
