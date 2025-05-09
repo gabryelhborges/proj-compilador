@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const SaidaAnalise = ({ tokens, erros, tabelaSimbolos }) => {
+const SaidaAnalise = ({ tokens, erros, tabelaSimbolos, codigoIntermediario }) => {
   const [abaAtiva, setAbaAtiva] = useState('tokens');
 
   // Função para classificar erros
@@ -11,26 +11,40 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos }) => {
     return 'erro-generico';
   };
 
+  // Função para formatar valores para exibição
+  const formatarValor = (valor) => {
+    if (valor === null || valor === undefined) return '-';
+    if (typeof valor === 'string') return `"${valor}"`;
+    if (typeof valor === 'boolean') return valor ? 'verdadeiro' : 'falso';
+    return String(valor);
+  };
+
   return (
     <div className="output-container">
       <div className="tabs">
-        <button 
-          className={abaAtiva === 'tokens' ? 'active' : ''} 
+        <button
+          className={abaAtiva === 'tokens' ? 'active' : ''}
           onClick={() => setAbaAtiva('tokens')}
         >
           Tokens {tokens.length > 0 && <span className="badge">{tokens.length}</span>}
         </button>
-        <button 
-          className={abaAtiva === 'erros' ? 'active' : ''} 
+        <button
+          className={abaAtiva === 'erros' ? 'active' : ''}
           onClick={() => setAbaAtiva('erros')}
         >
           Erros {erros.length > 0 && <span className="badge error-badge">{erros.length}</span>}
         </button>
-        <button 
-          className={abaAtiva === 'simbolos' ? 'active' : ''} 
+        <button
+          className={abaAtiva === 'simbolos' ? 'active' : ''}
           onClick={() => setAbaAtiva('simbolos')}
         >
           Tabela de Símbolos {tabelaSimbolos.length > 0 && <span className="badge">{tabelaSimbolos.length}</span>}
+        </button>
+        <button
+          className={abaAtiva === 'codigo' ? 'active' : ''}
+          onClick={() => setAbaAtiva('codigo')}
+        >
+          Código Intermediário {codigoIntermediario.length > 0 && <span className="badge">{codigoIntermediario.length}</span>}
         </button>
       </div>
 
@@ -57,13 +71,13 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos }) => {
             <pre>
               {Array.isArray(erros) && erros.length > 0
                 ? erros.map((err, idx) => (
-                    <div 
-                      key={idx} 
-                      className={classificarErro(err)}
-                    >
-                      {err}
-                    </div>
-                  ))
+                  <div
+                    key={idx}
+                    className={classificarErro(err)}
+                  >
+                    {err}
+                  </div>
+                ))
                 : 'Nenhum erro encontrado.'}
             </pre>
           </div>
@@ -82,6 +96,7 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos }) => {
                     <th>Escopo</th>
                     <th>Inicializado</th>
                     <th>Usado</th>
+                    <th>Valor</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -93,6 +108,7 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos }) => {
                       <td>{simbolo.escopo}</td>
                       <td>{simbolo.inicializado ? '✓' : '✗'}</td>
                       <td>{simbolo.usado ? '✓' : '✗'}</td>
+                      <td>{formatarValor(simbolo.valor)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -100,6 +116,18 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos }) => {
             ) : (
               <p>Nenhum símbolo encontrado.</p>
             )}
+          </div>
+        )}
+
+
+        {abaAtiva === 'codigo' && (
+          <div className="codigo-intermediario">
+            <h3>Código Intermediário (Representação de Três Endereços)</h3>
+            <pre>
+              {Array.isArray(codigoIntermediario) && codigoIntermediario.length > 0
+                ? codigoIntermediario.map((linha, idx) => <div key={idx}>{linha}</div>)
+                : 'Nenhum código intermediário gerado.'}
+            </pre>
           </div>
         )}
       </div>

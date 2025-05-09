@@ -8,6 +8,7 @@ import BotaoAnalise from './components/BotaoAnalise.jsx';
 import { analisarCodigo } from './utils/analisadorLexico.js';
 import { analisarSintatico } from './utils/analisadorSintatico.js';
 import { analisarSemantico } from './utils/analisadorSemantico.js';
+import { gerarCodigoIntermediario } from './utils/geradorCodigoIntermediario.js';
 
 function App() {
   const [código, setCódigo] = useState('');
@@ -17,7 +18,8 @@ function App() {
   const [tabelaSimbolos, setTabelaSimbolos] = useState([]);
   const [analisando, setAnalisando] = useState(false);
   const [currentFile, setCurrentFile] = useState(null);
-  
+  const [codigoIntermediario, setCodigoIntermediario] = useState([]);
+
   const refTextArea = useRef(null);
   const refSobreposição = useRef(null);
   const refNúmerosLinha = useRef(null);
@@ -51,30 +53,37 @@ function App() {
   // Executa a análise do código
   const executarAnálise = useCallback(async () => {
     setAnalisando(true);
-    
+
     try {
       // Análise léxica
       const resultadoLexico = analisarCodigo(código);
       const novosTokens = Array.isArray(resultadoLexico.tokens) ? resultadoLexico.tokens : [];
       const errosLexicos = Array.isArray(resultadoLexico.erros) ? resultadoLexico.erros : [];
-      
+
       // Análise sintática
       let errosSintaticos = [];
       const resultadoSintatico = analisarSintatico(novosTokens);
       errosSintaticos = Array.isArray(resultadoSintatico.erros) ? resultadoSintatico.erros : [];
-      
+
       // Análise semântica
       let errosSemanticos = [];
       let simbolos = [];
-      
-      const resultadoSemantico = analisarSemantico(novosTokens);
-      errosSemanticos = Array.isArray(resultadoSemantico.erros) ? resultadoSemantico.erros : [];
-      simbolos = Array.isArray(resultadoSemantico.tabelaSimbolos) ? resultadoSemantico.tabelaSimbolos : [];
-      
+      setCodigoIntermediario([]);
+      if (errosSintaticos.length === 0) {
+        const resultadoSemantico = analisarSemantico(novosTokens);
+        errosSemanticos = Array.isArray(resultadoSemantico.erros) ? resultadoSemantico.erros : [];
+        simbolos = Array.isArray(resultadoSemantico.tabelaSimbolos) ? resultadoSemantico.tabelaSimbolos : [];
+
+        if (errosSemanticos.length === 0) {
+          // Geração de código intermediário
+          const resultado = gerarCodigoIntermediario(novosTokens, simbolos);
+          setCodigoIntermediario(resultado.codigoIntermediario);
+        }
+      }
       setTokens(novosTokens);
       setErros([...errosLexicos, ...errosSintaticos, ...errosSemanticos]);
       setTabelaSimbolos(simbolos);
-      
+
     } catch (error) {
       console.error("Erro ao analisar código:", error);
       setErros([`Erro durante a análise: ${error.message}`]);
@@ -105,7 +114,7 @@ function App() {
 
   const handleSalvar = useCallback(() => {
     if (!código.trim()) return;
-    
+
     const blob = new Blob([código], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -117,7 +126,7 @@ function App() {
 
   const handleSalvarComo = useCallback(() => {
     if (!código.trim()) return;
-    
+
     const blob = new Blob([código], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -131,7 +140,7 @@ function App() {
     if (código.trim() && !window.confirm('Deseja criar um novo arquivo? As alterações não salvas serão perdidas.')) {
       return;
     }
-    
+
     setCódigo('');
     setTokens([]);
     setErros([]);
@@ -162,7 +171,12 @@ function App() {
         </div>
       </div>
       <BotaoAnalise onClick={executarAnálise} disabled={analisando || !código.trim()} />
-      <SaidaAnalise tokens={tokens} erros={erros} tabelaSimbolos={tabelaSimbolos} />
+      <SaidaAnalise
+        tokens={tokens}
+        erros={erros}
+        tabelaSimbolos={tabelaSimbolos}
+        codigoIntermediario={codigoIntermediario}
+      />
     </div>
   );
 }
