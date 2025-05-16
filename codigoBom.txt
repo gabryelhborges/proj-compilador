@@ -1,0 +1,8 @@
+variavel x : inteiro;
+variavel y : inteiro;
+variavel z : inteiro;
+
+x = 2;
+y = 3;
+z = 5;
+x = x + y * z;

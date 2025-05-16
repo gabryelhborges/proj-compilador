@@ -76,8 +76,8 @@ function App() {
 
         if (errosSemanticos.length === 0) {
           // Geração de código intermediário
-          const resultado = gerarCodigoIntermediario(novosTokens, simbolos);
-          setCodigoIntermediario(resultado.codigoIntermediario);
+          const codIntermediario = gerarCodigoIntermediario(novosTokens, simbolos);
+          setCodigoIntermediario(codIntermediario);
         }
       }
       setTokens(novosTokens);
