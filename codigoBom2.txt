@@ -9,4 +9,6 @@ x = x + y * z;
 se(x < y){
    x = 1;
 }
-z = 1;
+senao{
+   x = 3;
+}

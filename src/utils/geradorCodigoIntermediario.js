@@ -1,7 +1,10 @@
-export function gerarCodigoIntermediario(tokens, tabelaSimbolos) {
+import { otimizarCodigo } from './otimizadorCodigo.js';
+
+export function gerarCodigoIntermediario(tokens, tabelaSimbolos, aplicarOtimizacao = true) {
   const codigoIntermediario = [];
   let tempCount = 1; // Contador para variáveis temporárias (t1, t2, ...)
   let labelCount = 1; // Contador para rótulos (L1, L2, ...)
+  let tempCountObj = { value: tempCount }; // Objeto para contagem de variáveis temporárias
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
@@ -23,34 +26,62 @@ export function gerarCodigoIntermediario(tokens, tabelaSimbolos) {
     else if (token.tipo === 't_identificador' && tokens[i + 1]?.tipo === 't_atribuicao') {
       const variavel = token.lexema;
       i += 2; // Pula o '='
-      const { instrucao, novoIndice, resultado } = processarExpressao(i, tokens, tabelaSimbolos, tempCount);
+      const { instrucao, novoIndice, resultado } = processarExpressao(i, tokens, tabelaSimbolos, tempCountObj);
       codigoIntermediario.push(...instrucao);
       codigoIntermediario.push(`${variavel} := ${resultado}`);
-      tempCount++;
+      tempCount = tempCountObj.value;
       i = novoIndice;
     }
 
     // **Estrutura if**
     else if (token.tipo === 't_se') {
       i++; // Pula o 'se'
-      const { condicao, novoIndice } = processarCondicao(i, tokens, tabelaSimbolos, tempCount);
-      codigoIntermediario.push(...condicao);
+      
+      // Vamos pular o '('
+      i++; // Agora estamos no primeiro operando
+      const operando1 = tokens[i].lexema;
+      i++; // Agora estamos no operador
+      const operador = tokens[i].lexema;
+      i++; // Agora estamos no segundo operando
+      const operando2 = tokens[i].lexema;
+      i++; // Pula o ')'
+      
       const labelElse = `L${labelCount++}`;
       const labelEnd = `L${labelCount++}`;
-      codigoIntermediario.push(`if ${condicao[condicao.length - 1].split(' := ')[0]} == 0 goto ${labelElse}`);
-      i = novoIndice;
-      const { bloco, novoIndice: novoIndiceBloco } = processarBloco(i, tokens, tabelaSimbolos, tempCount);
+      
+      // Inverter a condição do if para salto condicional
+      let operadorNegado;
+      switch (operador) {
+        case '<': operadorNegado = '>='; break;
+        case '>': operadorNegado = '<='; break;
+        case '==': operadorNegado = '!='; break;
+        case '<=': operadorNegado = '>'; break;
+        case '>=': operadorNegado = '<'; break;
+        default: operadorNegado = '!='; // caso padrão
+      }
+      
+      // Usar expressão diretamente no if com a condição negada para saltar ao else quando falso
+      codigoIntermediario.push(`if ${operando1} ${operadorNegado} ${operando2} goto ${labelElse}`);
+      
+      // Processar bloco if
+      const { bloco, novoIndice: novoIndiceBloco } = processarBloco(i, tokens, tabelaSimbolos, tempCountObj);
       codigoIntermediario.push(...bloco);
-      codigoIntermediario.push(`goto ${labelEnd}`);
-      codigoIntermediario.push(`${labelElse}:`);
       i = novoIndiceBloco;
+      
+      // Verificar se há um bloco else
       if (tokens[i]?.tipo === 't_senao') {
+        codigoIntermediario.push(`goto ${labelEnd}`); // Adicionar salto para pular o bloco else
+        codigoIntermediario.push(`${labelElse}:`); // Início do bloco else
         i++; // Pula o 'senao'
-        const { blocoElse, novoIndiceElse } = processarBloco(i, tokens, tabelaSimbolos, tempCount);
+        
+        // Processar bloco else
+        const { bloco: blocoElse, novoIndice: novoIndiceElse } = processarBloco(i, tokens, tabelaSimbolos, tempCountObj);
         codigoIntermediario.push(...blocoElse);
         i = novoIndiceElse;
+        codigoIntermediario.push(`${labelEnd}:`); // Fim após o bloco else
+      } else {
+        codigoIntermediario.push(`${labelElse}:`); // Label para caso falso se não houver else
       }
-      codigoIntermediario.push(`${labelEnd}:`);
     }
 
     // **Estrutura while**
@@ -94,39 +125,82 @@ export function gerarCodigoIntermediario(tokens, tabelaSimbolos) {
     }
   }
 
-  return codigoIntermediario;
+  // Ao final da função, antes de retornar, aplicamos as otimizações
+  if (aplicarOtimizacao) {
+    const resultado = otimizarCodigo(codigoIntermediario);
+    return {
+      codigo: resultado.codigo,
+      otimizacoes: {
+        realizadas: resultado.otimizacoesRealizadas,
+        originais: resultado.otimizacoesOriginais
+      }
+    };
+  }
+  
+  return {
+    codigo: codigoIntermediario,
+    otimizacoes: {
+      realizadas: 0,
+      originais: {}
+    }
+  };
 }
 
 // **Processa expressões aritméticas**
-function processarExpressao(indice, tokens, tabelaSimbolos, tempCount) {
-  const instrucao = [];
-  let i = indice;
-  let resultado = '';
-
-  const token = tokens[i];
-
-  if (token.tipo === 't_identificador' || token.tipo === 't_num' || token.tipo === 't_num_decimal') {
-    resultado = token.lexema;
-    i++;
-
-    while (i < tokens.length && (tokens[i].tipo === 't_soma' || tokens[i].tipo === 't_subtracao' || tokens[i].tipo === 't_multiplicacao' || tokens[i].tipo === 't_divisao')) {
+function processarExpressao(indice, tokens, tabelaSimbolos, tempCountObj) {
+  // tempCountObj é um objeto: { value: number }
+  function parseExpressao(i) {
+    let { instrucao, resultado, novoIndice } = parseTermo(i);
+    i = novoIndice;
+    while (i < tokens.length && (tokens[i].tipo === 't_soma' || tokens[i].tipo === 't_subtracao')) {
       const operador = tokens[i].lexema;
       i++;
-      const proximoToken = tokens[i];
-      let operando2 = '';
-
-      if (proximoToken.tipo === 't_identificador' || proximoToken.tipo === 't_num' || proximoToken.tipo === 't_num_decimal') {
-        operando2 = proximoToken.lexema;
-        i++;
-      }
-
-      const tempVar = `t${tempCount++}`;
-      instrucao.push(`${tempVar} := ${resultado} ${operador} ${operando2}`);
+      const termo = parseTermo(i);
+      const tempVar = `t${tempCountObj.value++}`;
+      instrucao = instrucao.concat(termo.instrucao);
+      instrucao.push(`${tempVar} := ${resultado} ${operador} ${termo.resultado}`);
       resultado = tempVar;
+      i = termo.novoIndice;
     }
+    return { instrucao, resultado, novoIndice: i };
   }
 
-  return { instrucao, novoIndice: i, resultado };
+  function parseTermo(i) {
+    let { instrucao, resultado, novoIndice } = parseFator(i);
+    i = novoIndice;
+    while (i < tokens.length && (tokens[i].tipo === 't_multiplicacao' || tokens[i].tipo === 't_divisao')) {
+      const operador = tokens[i].lexema;
+      i++;
+      const fator = parseFator(i);
+      const tempVar = `t${tempCountObj.value++}`;
+      instrucao = instrucao.concat(fator.instrucao);
+      instrucao.push(`${tempVar} := ${resultado} ${operador} ${fator.resultado}`);
+      resultado = tempVar;
+      i = fator.novoIndice;
+    }
+    return { instrucao, resultado, novoIndice: i };
+  }
+
+  function parseFator(i) {
+    const token = tokens[i];
+    if (token.tipo === 't_abre_par') {
+      i++;
+      const expr = parseExpressao(i);
+      i = expr.novoIndice;
+      if (tokens[i]?.tipo === 't_fecha_par') i++;
+      return { instrucao: expr.instrucao, resultado: expr.resultado, novoIndice: i };
+    } else if (
+      token.tipo === 't_identificador' ||
+      token.tipo === 't_num' ||
+      token.tipo === 't_num_decimal'
+    ) {
+      return { instrucao: [], resultado: token.lexema, novoIndice: i + 1 };
+    }
+    // Caso de erro: retorna vazio
+    return { instrucao: [], resultado: '', novoIndice: i + 1 };
+  }
+
+  return parseExpressao(indice);
 }
 
 // **Processa condições (exemplo simplificado)**
@@ -155,9 +229,9 @@ function processarBloco(indice, tokens, tabelaSimbolos, tempCount) {
     }
     if (tokens[i]?.tipo === 't_ponto_virgula') i++; // Pula o ';'
     const subCodigo = gerarCodigoIntermediario(subTokens, tabelaSimbolos);
-    bloco.push(...subCodigo);
+    bloco.push(...subCodigo.codigo);
   }
-  return { bloco, novoIndice: i + 1 }; // Pula a '}'
+  return { bloco, novoIndice: i };
 }
 
 // **Processa inicialização do for**
@@ -171,7 +245,7 @@ function processarInicializacao(indice, tokens, tabelaSimbolos, tempCount) {
   }
   i++; // Pula o ';'
   const subCodigo = gerarCodigoIntermediario(subTokens, tabelaSimbolos);
-  inicializacao.push(...subCodigo);
+  inicializacao.push(...subCodigo.codigo);
   return { inicializacao, novoIndice: i };
 }
 
@@ -185,6 +259,6 @@ function processarIncremento(indice, tokens, tabelaSimbolos, tempCount) {
     i++;
   }
   const subCodigo = gerarCodigoIntermediario(subTokens, tabelaSimbolos);
-  incremento.push(...subCodigo);
+  incremento.push(...subCodigo.codigo);
   return { incremento, novoIndice: i };
 }

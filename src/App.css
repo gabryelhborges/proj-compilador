@@ -297,3 +297,49 @@ pre {
 .toolbar button:hover {
   background-color: #0056b3;
 }
+
+.otimizacoes-info {
+  margin-bottom: 10px;
+  padding: 5px;
+  background: #333;
+  border-left: 3px solid #007bff;
+}
+
+.btn-toggle-original {
+  margin-left: 10px;
+  padding: 3px 8px;
+  background: #555;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.btn-toggle-original:hover {
+  background: #666;
+}
+
+.linha-otimizada {
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.linha-original {
+  color: #ff6b6b;
+  text-decoration: line-through;
+}
+
+.seta-otimizacao {
+  color: #666;
+  margin: 0 5px;
+}
+
+.linha-nova {
+  color: #69db7c;
+}
+
+.codigo-container {
+  padding: 5px;
+  background: #1e1e1e;
+  border-radius: 3px;
+  border-left: 3px solid #333;
+}

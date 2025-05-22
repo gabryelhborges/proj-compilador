@@ -6,7 +6,6 @@ y = 3;
 z = 5;
 x = x + y * z;
 
-se(x < y){
-   x = 1;
+enquanto(x < y){
+ x = x + 1;
 }
-z = 1;

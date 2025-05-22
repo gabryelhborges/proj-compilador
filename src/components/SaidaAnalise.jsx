@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 const SaidaAnalise = ({ tokens, erros, tabelaSimbolos, codigoIntermediario }) => {
   const [abaAtiva, setAbaAtiva] = useState('tokens');
+  const [mostrarOriginal, setMostrarOriginal] = useState(false);
 
   // Função para classificar erros
   const classificarErro = (erro) => {
@@ -44,7 +45,8 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos, codigoIntermediario }) =>
           className={abaAtiva === 'codigo' ? 'active' : ''}
           onClick={() => setAbaAtiva('codigo')}
         >
-          Código Intermediário {codigoIntermediario.length > 0 && <span className="badge">{codigoIntermediario.length}</span>}
+          Código Intermediário {codigoIntermediario.codigo && codigoIntermediario.codigo.length > 0 && 
+            <span className="badge">{codigoIntermediario.codigo.length}</span>}
         </button>
       </div>
 
@@ -119,15 +121,57 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos, codigoIntermediario }) =>
           </div>
         )}
 
-
         {abaAtiva === 'codigo' && (
           <div className="codigo-intermediario">
             <h3>Código Intermediário (Representação de Três Endereços)</h3>
-            <pre>
-              {Array.isArray(codigoIntermediario) && codigoIntermediario.length > 0
-                ? codigoIntermediario.map((linha, idx) => <div key={idx}>{linha}</div>)
-                : 'Nenhum código intermediário gerado.'}
-            </pre>
+            {codigoIntermediario && codigoIntermediario.codigo && (
+              <>
+                <div className="otimizacoes-info">
+                  <p>
+                    Otimizações aplicadas: {codigoIntermediario.otimizacoes.realizadas}
+                    <button 
+                      className="btn-toggle-original"
+                      onClick={() => setMostrarOriginal(!mostrarOriginal)}>
+                      {mostrarOriginal ? 'Ocultar Código Original' : 'Mostrar Código Original'}
+                    </button>
+                  </p>
+                </div>
+                <pre className="codigo-container">
+                  {mostrarOriginal ? (
+                    // Exibir comparação entre original e otimizado
+                    codigoIntermediario.codigo.map((linha, idx) => {
+                      const original = codigoIntermediario.otimizacoes.originais[idx];
+                      return (
+                        <div key={idx} className={original ? "linha-otimizada" : ""}>
+                          {original ? (
+                            <>
+                              <span className="linha-original">{original}</span>
+                              <span className="seta-otimizacao">→</span> 
+                              <span className="linha-nova">{linha}</span>
+                            </>
+                          ) : (
+                            linha
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    // Exibir apenas código otimizado
+                    codigoIntermediario.codigo.map((linha, idx) => (
+                      <div 
+                        key={idx} 
+                        className={codigoIntermediario.otimizacoes.originais[idx] ? "linha-otimizada" : ""}
+                      >
+                        {linha}
+                      </div>
+                    ))
+                  )}
+                </pre>
+              </>
+            )}
+            {(!codigoIntermediario || !codigoIntermediario.codigo || codigoIntermediario.codigo.length === 0) && (
+              <p>Nenhum código intermediário gerado.</p>
+            )}
           </div>
         )}
       </div>

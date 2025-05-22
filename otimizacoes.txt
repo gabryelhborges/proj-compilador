@@ -1,0 +1,72 @@
+// Exemplo de código que exercita todas as otimizações do compilador
+
+// Declarações de variáveis com inicialização
+variavel resultado: inteiro = 0;
+variavel i: inteiro = 10;
+variavel j: inteiro = 10;
+variavel temporario: inteiro = 0;
+variavel flag: logico = verdadeiro;
+
+// Subexpressões comuns (será otimizado pelo eliminarSubexpressoesComuns)
+variavel exp1: inteiro = i + j;
+variavel exp2: inteiro = i + j;
+
+// Atribuição redundante (será otimizado pelo eliminarCodigoRedundante)
+i = i;
+temporario = 5;
+temporario = temporario;
+
+// Código morto (será removido pelo eliminarCodigoMorto)
+variavel naoUsada: inteiro = 42;
+
+// Propagação de cópias (será otimizado pelo propagarCopias)
+variavel original: inteiro = 100;
+variavel copia: inteiro = original;
+resultado = copia + 5;  // Será otimizado para usar 'original' diretamente
+
+// Expressões com propriedades algébricas (serão otimizadas por aplicarPropriedadesAlgebricas)
+variavel simpAlg1: inteiro = i * 1;  // Multiplicação por 1
+variavel simpAlg2: inteiro = i * 0;  // Multiplicação por 0
+variavel simpAlg3: inteiro = i + 0;  // Adição com 0
+variavel simpAlg4: inteiro = i - 0;  // Subtração de 0
+variavel simpAlg5: inteiro = i / 1;  // Divisão por 1
+
+// Estrutura condicional com condições simplificáveis (será otimizado por simplificarCondicoes)
+se (i == i) {  // Condição sempre verdadeira
+    resultado = resultado + 1;
+}
+
+se (i != i) {  // Condição sempre falsa
+    resultado = resultado + 2;  // Código morto
+}
+
+se (10 > 5) {  // Condição numérica constante (verdadeira)
+    resultado = resultado + 3;
+}
+
+se (5 > 10) {  // Condição numérica constante (falsa)
+    resultado = resultado + 4;  // Código morto
+}
+
+// Desvios desnecessários (serão removidos por eliminarDesviosUnnecessarios)
+se (i > 0) {
+    resultado = resultado + 5;
+} 
+senao {
+    resultado = resultado + 6;
+}
+
+// Laço com operações que poderão ser otimizadas
+enquanto (i > 0) {
+    // Estas operações repetitivas serão candidatas a otimização
+    variavel soma: inteiro = i + j;
+    variavel mult: inteiro = i * j;
+    
+    // Reuso da mesma expressão
+    resultado = resultado + soma;
+    i = i - 1;
+    j = j + 0;  // Operação que será simplificada
+}
+
+// Código final para evitar que todas as variáveis sejam consideradas não-utilizadas
+variavel resultadoFinal: inteiro = resultado + exp1 + exp2 + simpAlg1 + simpAlg2 + simpAlg3 + simpAlg4 + simpAlg5;
