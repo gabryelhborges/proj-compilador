@@ -1,6 +1,6 @@
 import { otimizarCodigo } from './otimizadorCodigo.js';
 
-export function gerarCodigoIntermediario(tokens, tabelaSimbolos, aplicarOtimizacao = false) {
+export function gerarCodigoIntermediario(tokens, tabelaSimbolos, aplicarOtimizacao = true) {
   if (!Array.isArray(tokens) || tokens.length === 0) {
     return {
       codigo: [],
@@ -198,8 +198,14 @@ function processarEstruturase(indice, tokens, tabelaSimbolos, tempCountObj, labe
   const labelElse = `L${currentLabelCount++}`;
   const labelEnd = `L${currentLabelCount++}`;
   
-  // Salto condicional (quando condição é falsa)
-  instrucoes.push(`if ${condicao.resultado} == 0 goto ${labelElse}`);
+  // Salto condicional: se a condição for FALSA, vai para o else
+  if (condicao.operador) {
+    // Inverte a condição para saltar quando for falsa
+    const operadorInverso = inverterOperador(condicao.operador);
+    instrucoes.push(`if ${condicao.operandoEsquerdo} ${operadorInverso} ${condicao.operandoDireito} goto ${labelElse}`);
+  } else {
+    instrucoes.push(`if ${condicao.operandoEsquerdo} == 0 goto ${labelElse}`);
+  }
   
   // Processa bloco if
   const blocoIf = processarBloco(i, tokens, tabelaSimbolos, tempCountObj);
@@ -210,6 +216,7 @@ function processarEstruturase(indice, tokens, tabelaSimbolos, tempCountObj, labe
   if (tokens[i]?.tipo === 't_senao') {
     instrucoes.push(`goto ${labelEnd}`); // Pula o bloco else
     instrucoes.push(`${labelElse}:`); // Label do else
+    
     i++; // Pula 'senao'
     
     const blocoElse = processarBloco(i, tokens, tabelaSimbolos, tempCountObj);
@@ -254,8 +261,14 @@ function processarEstruturaWhile(indice, tokens, tabelaSimbolos, tempCountObj, l
   
   i++; // Pula ')'
   
-  // Salto condicional para fim do loop
-  instrucoes.push(`if ${condicao.resultado} == 0 goto ${labelFim}`);
+  // Salto condicional direto para fim do loop
+  if (condicao.operador) {
+    // Inverte a condição para sair do loop quando a condição for falsa
+    const operadorInverso = inverterOperador(condicao.operador);
+    instrucoes.push(`if ${condicao.operandoEsquerdo} ${operadorInverso} ${condicao.operandoDireito} goto ${labelFim}`);
+  } else {
+    instrucoes.push(`if ${condicao.operandoEsquerdo} == 0 goto ${labelFim}`);
+  }
   
   // Processa bloco do while
   const bloco = processarBloco(i, tokens, tabelaSimbolos, tempCountObj);
@@ -266,6 +279,19 @@ function processarEstruturaWhile(indice, tokens, tabelaSimbolos, tempCountObj, l
   instrucoes.push(`${labelFim}:`); // Label do fim
   
   return { instrucoes, novoIndice: i, novoLabelCount: currentLabelCount };
+}
+
+// Função auxiliar para inverter operadores de comparação
+function inverterOperador(operador) {
+  switch (operador) {
+    case '<': return '>=';
+    case '>': return '<=';
+    case '<=': return '>';
+    case '>=': return '<';
+    case '==': return '!=';
+    case '!=': return '==';
+    default: return operador;
+  }
 }
 
 // **Processa estrutura for**
@@ -304,7 +330,12 @@ function processarEstruturaFor(indice, tokens, tabelaSimbolos, tempCountObj, lab
   i++; // Pula ';'
   
   // Salto condicional para fim do loop
-  instrucoes.push(`if ${condicao.resultado} == 0 goto ${labelFim}`);
+  if (condicao.operador) {
+    const operadorInverso = inverterOperador(condicao.operador);
+    instrucoes.push(`if ${condicao.operandoEsquerdo} ${operadorInverso} ${condicao.operandoDireito} goto ${labelFim}`);
+  } else {
+    instrucoes.push(`if ${condicao.operandoEsquerdo} == 0 goto ${labelFim}`);
+  }
   
   // Salva posição do incremento para processar depois
   const inicioIncremento = i;
@@ -358,11 +389,14 @@ function processarCondicao(indice, tokens, tabelaSimbolos, tempCountObj) {
   instrucoes.push(...expr2.instrucao);
   i = expr2.novoIndice;
   
-  // Cria variável temporária para resultado da comparação
-  const tempVar = `t${tempCountObj.value++}`;
-  instrucoes.push(`${tempVar} := ${expr1.resultado} ${operador} ${expr2.resultado}`);
-  
-  return { instrucoes, resultado: tempVar, novoIndice: i };
+  // Retorna os operandos separadamente em vez de criar uma variável temporária
+  return { 
+    instrucoes, 
+    operandoEsquerdo: expr1.resultado,
+    operador: operador,
+    operandoDireito: expr2.resultado,
+    novoIndice: i 
+  };
 }
 
 // **Processa blocos de código**
