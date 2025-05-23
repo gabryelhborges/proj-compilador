@@ -1,8 +1,0 @@
-variavel x: inteiro = 5;
-variavel y: inteiro;
-
-y = y + 1;
-
-se (x > 0) {
-  x = x - 1;
-}
