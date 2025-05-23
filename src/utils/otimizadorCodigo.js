@@ -1,410 +1,538 @@
-/**
- * Módulo de otimização para o código intermediário de três endereços
- */
-
-/**
- * Aplica várias otimizações ao código intermediário
- * @param {string[]} codigo - O código intermediário a ser otimizado
- * @returns {string[]} - O código otimizado
- */
-export function otimizarCodigo(codigo) {
-  if (!Array.isArray(codigo) || codigo.length === 0) {
-    return codigo;
+export function otimizarCodigo(codigoIntermediario) {
+  if (!Array.isArray(codigoIntermediario) || codigoIntermediario.length === 0) {
+    return {
+      codigo: [],
+      otimizacoesRealizadas: 0,
+      otimizacoesOriginais: {}
+    };
   }
 
-  let codigoOtimizado = [...codigo];
+  let codigo = [...codigoIntermediario];
   let otimizacoesRealizadas = 0;
-  const otimizacoesOriginais = {};
-  
-  // Aplicar otimizações em ciclo até não haver mais mudanças
-  let continuar = true;
-  let iteracoes = 0;
-  const MAX_ITERACOES = 10; // Limite para evitar loops infinitos
+  let otimizacoesOriginais = {};
+  let mudancasFeitas = true;
 
-  while (continuar && iteracoes < MAX_ITERACOES) {
-    iteracoes++;
-    const tamanhoAnterior = codigoOtimizado.length;
-    
-    // 1. Eliminação de subexpressões comuns
-    codigoOtimizado = eliminarSubexpressoesComuns(codigoOtimizado);
-    
-    // 2. Eliminação de código morto
-    codigoOtimizado = eliminarCodigoMorto(codigoOtimizado);
-    
-    // 3. Propagação de cópias
-    codigoOtimizado = propagarCopias(codigoOtimizado);
-    
-    // 4. Eliminação de desvios desnecessários
-    codigoOtimizado = eliminarDesviosUnnecessarios(codigoOtimizado);
-    
-    // 5. Uso de propriedades algébricas
-    codigoOtimizado = aplicarPropriedadesAlgebricas(codigoOtimizado);
-    
-    // 6. Simplificação de condições
-    codigoOtimizado = simplificarCondicoes(codigoOtimizado);
-    
-    // 7. Eliminação de código redundante
-    codigoOtimizado = eliminarCodigoRedundante(codigoOtimizado);
+  // Aplicar otimizações até que não haja mais mudanças
+  while (mudancasFeitas) {
+    mudancasFeitas = false;
+    const resultadoAnterior = codigo.length;
 
-    // Verificar se houve mudança neste ciclo
-    continuar = codigoOtimizado.length !== tamanhoAnterior;
-    
-    // Contar otimizações realizadas
-    if (continuar) {
-      otimizacoesRealizadas++;
+    // 1. Eliminação de Subexpressões Comuns
+    const subexpressoesResult = eliminarSubexpressoesComuns(codigo);
+    codigo = subexpressoesResult.codigo;
+    if (subexpressoesResult.otimizacoes > 0) {
+      mudancasFeitas = true;
+      otimizacoesRealizadas += subexpressoesResult.otimizacoes;
+      Object.assign(otimizacoesOriginais, subexpressoesResult.originais);
     }
-  }
 
-  // Registrar as mudanças para exibição
-  for (let i = 0; i < codigo.length; i++) {
-    if (i >= codigoOtimizado.length || codigo[i] !== codigoOtimizado[i]) {
-      otimizacoesOriginais[i] = codigo[i];
+    // 2. Eliminação de Código Redundante
+    const redundanteResult = eliminarCodigoRedundante(codigo);
+    codigo = redundanteResult.codigo;
+    if (redundanteResult.otimizacoes > 0) {
+      mudancasFeitas = true;
+      otimizacoesRealizadas += redundanteResult.otimizacoes;
+      Object.assign(otimizacoesOriginais, redundanteResult.originais);
+    }
+
+    // 3. Propagação de Cópias
+    const propagacaoResult = propagarCopias(codigo);
+    codigo = propagacaoResult.codigo;
+    if (propagacaoResult.otimizacoes > 0) {
+      mudancasFeitas = true;
+      otimizacoesRealizadas += propagacaoResult.otimizacoes;
+      Object.assign(otimizacoesOriginais, propagacaoResult.originais);
+    }
+
+    // 4. Eliminação de Saltos Desnecessários
+    const saltosResult = eliminarSaltosUnnecessarios(codigo);
+    codigo = saltosResult.codigo;
+    if (saltosResult.otimizacoes > 0) {
+      mudancasFeitas = true;
+      otimizacoesRealizadas += saltosResult.otimizacoes;
+      Object.assign(otimizacoesOriginais, saltosResult.originais);
+    }
+
+    // 5. Aplicação de Propriedades Algébricas
+    const algebricasResult = aplicarPropriedadesAlgebricas(codigo);
+    codigo = algebricasResult.codigo;
+    if (algebricasResult.otimizacoes > 0) {
+      mudancasFeitas = true;
+      otimizacoesRealizadas += algebricasResult.otimizacoes;
+      Object.assign(otimizacoesOriginais, algebricasResult.originais);
+    }
+
+    // 6. Movimentação de Código Invariante em Laços
+    const invarianteResult = moverCodigoInvarianteLacos(codigo);
+    codigo = invarianteResult.codigo;
+    if (invarianteResult.otimizacoes > 0) {
+      mudancasFeitas = true;
+      otimizacoesRealizadas += invarianteResult.otimizacoes;
+      Object.assign(otimizacoesOriginais, invarianteResult.originais);
+    }
+
+    // 7. Eliminação de Código Morto
+    const mortoResult = eliminarCodigoMorto(codigo);
+    codigo = mortoResult.codigo;
+    if (mortoResult.otimizacoes > 0) {
+      mudancasFeitas = true;
+      otimizacoesRealizadas += mortoResult.otimizacoes;
+      Object.assign(otimizacoesOriginais, mortoResult.originais);
+    }
+
+    // Verifica se houve mudanças significativas
+    if (codigo.length === resultadoAnterior && !mudancasFeitas) {
+      break;
     }
   }
 
   return {
-    codigo: codigoOtimizado,
+    codigo,
     otimizacoesRealizadas,
     otimizacoesOriginais
   };
 }
 
-/**
- * 1. Elimina subexpressões comuns
- * @param {string[]} codigo 
- * @returns {string[]}
- */
+// 1. Eliminação de Subexpressões Comuns
 function eliminarSubexpressoesComuns(codigo) {
-  const resultado = [...codigo];
-  const expressoes = new Map();
-  
-  // Encontrar padrões de expressões comuns: t1 := a op b
-  for (let i = 0; i < resultado.length; i++) {
-    const linha = resultado[i];
+  const novocodigo = [];
+  const expressoesDisponiveis = new Map(); // expressão -> variável temporária
+  let otimizacoes = 0;
+  let originais = {};
+
+  for (let i = 0; i < codigo.length; i++) {
+    const linha = codigo[i];
     
-    // Verificar se é uma atribuição com operação
-    const match = linha.match(/^(t\d+) := ([^ ]+) ([\+\-\*\/]) ([^ ]+)$/);
-    if (match) {
-      const [_, temp, op1, operador, op2] = match;
-      const expressaoChave = `${op1} ${operador} ${op2}`;
+    // Analisa atribuições da forma: variavel := expressao
+    const matchAtribuicao = linha.match(/^(\w+)\s*:=\s*(.+)$/);
+    if (matchAtribuicao) {
+      const [, variavel, expressao] = matchAtribuicao;
       
-      // Se já vimos esta expressão antes, podemos reutilizar o resultado
-      if (expressoes.has(expressaoChave)) {
-        const tempAnterior = expressoes.get(expressaoChave);
+      // Verifica se é uma expressão aritmética simples (a op b)
+      const matchExpressao = expressao.match(/^(\w+)\s*([\+\-\*\/])\s*(\w+)$/);
+      if (matchExpressao) {
+        const [, operando1, operador, operando2] = matchExpressao;
+        const chaveExpressao = `${operando1}${operador}${operando2}`;
         
-        // Substituir todas as ocorrências posteriores de temp pelo tempAnterior
-        for (let j = i + 1; j < resultado.length; j++) {
-          resultado[j] = resultado[j].replace(
-            new RegExp(`\\b${temp}\\b`, 'g'), 
-            tempAnterior
-          );
+        // Verifica se a expressão já foi calculada anteriormente
+        if (expressoesDisponiveis.has(chaveExpressao)) {
+          const variavelAnterior = expressoesDisponiveis.get(chaveExpressao);
+          // Substitui pela variável que já contém o resultado
+          const novaLinha = `${variavel} := ${variavelAnterior}`;
+          novocodigo.push(novaLinha);
+          
+          originais[novocodigo.length - 1] = linha;
+          otimizacoes++;
+        } else {
+          // Primeira ocorrência da expressão
+          expressoesDisponiveis.set(chaveExpressao, variavel);
+          novocodigo.push(linha);
         }
-        
-        // Remover a linha atual (expressão redundante)
-        resultado.splice(i, 1);
-        i--; // Ajustar o índice após a remoção
       } else {
-        expressoes.set(expressaoChave, temp);
+        novocodigo.push(linha);
+        // Remove expressões que usam a variável sendo atribuída
+        for (const [expr, varTemp] of expressoesDisponiveis.entries()) {
+          if (expr.includes(variavel)) {
+            expressoesDisponiveis.delete(expr);
+          }
+        }
+      }
+    } else {
+      novocodigo.push(linha);
+      
+      // Para outros tipos de instruções, limpa expressões que podem ser afetadas
+      const variavelAfetada = extrairVariavelAfetada(linha);
+      if (variavelAfetada) {
+        for (const [expr, varTemp] of expressoesDisponiveis.entries()) {
+          if (expr.includes(variavelAfetada)) {
+            expressoesDisponiveis.delete(expr);
+          }
+        }
       }
     }
   }
-  
-  return resultado;
+
+  return { codigo: novocodigo, otimizacoes, originais };
 }
 
-/**
- * 2. Elimina código morto (variáveis temporárias não utilizadas)
- * @param {string[]} codigo 
- * @returns {string[]}
- */
-function eliminarCodigoMorto(codigo) {
-  const resultado = [...codigo];
-  let mudou = true;
-  
-  while (mudou) {
-    mudou = false;
-    const variaveis = new Set();
-    const definicoes = new Map();
+// 2. Eliminação de Código Redundante
+function eliminarCodigoRedundante(codigo) {
+  const novocodigo = [];
+  let otimizacoes = 0;
+  let originais = {};
+  let ultimaInstrucao = null;
+
+  for (let i = 0; i < codigo.length; i++) {
+    const linha = codigo[i];
     
-    // Primeiro passo: encontrar todas as variáveis usadas
-    for (let i = 0; i < resultado.length; i++) {
-      const linha = resultado[i];
-      
-      // Ignorar linhas de label ou goto
-      if (linha.includes(':') || linha.startsWith('goto')) {
+    // Verifica se a linha atual é idêntica à anterior
+    if (linha === ultimaInstrucao) {
+      // Instrução redundante - pula
+      otimizacoes++;
+      continue;
+    }
+    
+    // Verifica atribuições do tipo x := x (que são inúteis)
+    const matchAutoAtribuicao = linha.match(/^(\w+)\s*:=\s*(\w+)$/);
+    if (matchAutoAtribuicao) {
+      const [, varEsquerda, varDireita] = matchAutoAtribuicao;
+      if (varEsquerda === varDireita) {
+        // Atribuição redundante (x := x)
+        otimizacoes++;
         continue;
       }
-      
-      // Encontrar variáveis usadas no lado direito ou em condições
-      if (linha.includes(' := ')) {
-        const partes = linha.split(' := ');
-        const varDef = partes[0].trim();
-        const ladoDireito = partes[1];
-        
-        // Armazenar definição
-        definicoes.set(varDef, i);
-        
-        // Buscar variáveis usadas no lado direito
-        const usadas = ladoDireito.match(/\b[a-zA-Z][a-zA-Z0-9_]*\b/g) || [];
-        usadas.forEach(v => variaveis.add(v));
-      }
-      else if (linha.startsWith('if ')) {
-        const usadas = linha.match(/\b[a-zA-Z][a-zA-Z0-9_]*\b/g) || [];
-        usadas.forEach(v => {
-          if (v !== 'if' && v !== 'goto') {
-            variaveis.add(v);
-          }
-        });
-      }
     }
     
-    // Segundo passo: remover definições de temporários não usados
-    for (const [varDef, indice] of definicoes.entries()) {
-      // Só considerar temporários (t1, t2, etc)
-      if (varDef.startsWith('t') && /^t\d+$/.test(varDef) && !variaveis.has(varDef)) {
-        resultado.splice(indice, 1);
-        mudou = true;
-        break; // Recomeçar porque os índices mudaram
+    novocodigo.push(linha);
+    ultimaInstrucao = linha;
+  }
+
+  return { codigo: novocodigo, otimizacoes, originais };
+}
+
+// 3. Propagação de Cópias
+function propagarCopias(codigo) {
+  const novocodigo = [];
+  const copias = new Map(); // variavel -> valor_copiado
+  let otimizacoes = 0;
+  let originais = {};
+
+  for (let i = 0; i < codigo.length; i++) {
+    let linha = codigo[i];
+    
+    // Detecta cópias simples (x := y)
+    const matchCopia = linha.match(/^(\w+)\s*:=\s*(\w+)$/);
+    if (matchCopia) {
+      const [, destino, origem] = matchCopia;
+      
+      // Se origem também é uma cópia, propaga transitivamente
+      const origemReal = copias.get(origem) || origem;
+      copias.set(destino, origemReal);
+      novocodigo.push(linha);
+    } else {
+      // Propaga cópias em outras expressões
+      let linhaOriginal = linha;
+      for (const [variavel, valor] of copias.entries()) {
+        // Substitui usos da variável copiada pelo valor original
+        const regex = new RegExp(`\\b${variavel}\\b`, 'g');
+        linha = linha.replace(regex, valor);
+      }
+      
+      if (linha !== linhaOriginal) {
+        originais[novocodigo.length] = linhaOriginal;
+        otimizacoes++;
+      }
+      
+      novocodigo.push(linha);
+      
+      // Remove cópias que são invalidadas por esta instrução
+      const variavelAfetada = extrairVariavelAfetada(linha);
+      if (variavelAfetada) {
+        copias.delete(variavelAfetada);
+        // Remove também cópias que dependem desta variável
+        for (const [copia, origem] of copias.entries()) {
+          if (origem === variavelAfetada) {
+            copias.delete(copia);
+          }
+        }
       }
     }
   }
-  
-  return resultado;
+
+  return { codigo: novocodigo, otimizacoes, originais };
 }
 
-/**
- * 3. Propaga cópias simples (a := b)
- * @param {string[]} codigo 
- * @returns {string[]}
- */
-function propagarCopias(codigo) {
-  const resultado = [...codigo];
-  const copias = new Map();
-  
-  for (let i = 0; i < resultado.length; i++) {
-    const linha = resultado[i];
+// 4. Eliminação de Saltos Desnecessários
+function eliminarSaltosUnnecessarios(codigo) {
+  const novocodigo = [];
+  let otimizacoes = 0;
+  let originais = {};
+
+  for (let i = 0; i < codigo.length; i++) {
+    const linha = codigo[i];
     
-    // Verificar se é uma cópia simples: variável := variável
-    const matchCopia = linha.match(/^([a-zA-Z][a-zA-Z0-9_]*) := ([a-zA-Z][a-zA-Z0-9_]*)$/);
-    if (matchCopia) {
-      const [_, destino, origem] = matchCopia;
+    // Detecta goto seguido imediatamente pelo label de destino
+    if (linha.startsWith('goto ') && i + 1 < codigo.length) {
+      const label = linha.substring(5).trim();
+      const proximaLinha = codigo[i + 1];
       
-      // Não considerar atribuições para si mesmo (a := a)
-      if (destino !== origem) {
-        copias.set(destino, origem);
+      if (proximaLinha === `${label}:`) {
+        // Salto desnecessário - pula a instrução goto
+        originais[novocodigo.length] = linha;
+        otimizacoes++;
+        continue;
+      }
+    }
+    
+    novocodigo.push(linha);
+  }
+
+  return { codigo: novocodigo, otimizacoes, originais };
+}
+
+// 5. Aplicação de Propriedades Algébricas
+function aplicarPropriedadesAlgebricas(codigo) {
+  const novocodigo = [];
+  let otimizacoes = 0;
+  let originais = {};
+
+  for (let i = 0; i < codigo.length; i++) {
+    let linha = codigo[i];
+    const linhaOriginal = linha;
+    
+    // Aplica simplificações algébricas
+    const matchAtribuicao = linha.match(/^(\w+)\s*:=\s*(.+)$/);
+    if (matchAtribuicao) {
+      const [, variavel, expressao] = matchAtribuicao;
+      let novaExpressao = expressao;
+      
+      // x + 0 = x
+      novaExpressao = novaExpressao.replace(/(\w+)\s*\+\s*0\b/g, '$1');
+      novaExpressao = novaExpressao.replace(/\b0\s*\+\s*(\w+)/g, '$1');
+      
+      // x - 0 = x
+      novaExpressao = novaExpressao.replace(/(\w+)\s*-\s*0\b/g, '$1');
+      
+      // x * 1 = x
+      novaExpressao = novaExpressao.replace(/(\w+)\s*\*\s*1\b/g, '$1');
+      novaExpressao = novaExpressao.replace(/\b1\s*\*\s*(\w+)/g, '$1');
+      
+      // x * 0 = 0
+      novaExpressao = novaExpressao.replace(/(\w+)\s*\*\s*0\b/g, '0');
+      novaExpressao = novaExpressao.replace(/\b0\s*\*\s*(\w+)/g, '0');
+      
+      // x / 1 = x
+      novaExpressao = novaExpressao.replace(/(\w+)\s*\/\s*1\b/g, '$1');
+      
+      // Se a expressão mudou, aplica a otimização
+      if (novaExpressao !== expressao) {
+        linha = `${variavel} := ${novaExpressao}`;
+        originais[novocodigo.length] = linhaOriginal;
+        otimizacoes++;
+      }
+    }
+    
+    novocodigo.push(linha);
+  }
+
+  return { codigo: novocodigo, otimizacoes, originais };
+}
+
+// 6. Movimentação de Código Invariante em Laços
+function moverCodigoInvarianteLacos(codigo) {
+  const novocodigo = [];
+  let otimizacoes = 0;
+  let originais = {};
+  
+  // Identifica estruturas de laço
+  for (let i = 0; i < codigo.length; i++) {
+    const linha = codigo[i];
+    
+    // Detecta início de laço while
+    if (linha.endsWith(':') && linha.startsWith('L') && 
+        i + 1 < codigo.length && codigo[i + 1].includes('goto')) {
+      
+      const labelInicio = linha.slice(0, -1);
+      let fimLaco = -1;
+      let variaveisModificadas = new Set();
+      let instrucoesLaco = [];
+      
+      // Encontra o fim do laço e coleta informações
+      for (let j = i + 1; j < codigo.length; j++) {
+        if (codigo[j] === `goto ${labelInicio}`) {
+          fimLaco = j;
+          break;
+        }
+        instrucoesLaco.push({ indice: j, linha: codigo[j] });
         
-        // Propagar a cópia para as linhas seguintes
-        for (let j = i + 1; j < resultado.length; j++) {
-          // Interromper propagação se destino for redefinido
-          if (resultado[j].startsWith(`${destino} :=`) || 
-              resultado[j].includes(`:${destino}:`)) {
-            break;
+        // Identifica variáveis modificadas no laço
+        const varModificada = extrairVariavelAfetada(codigo[j]);
+        if (varModificada) {
+          variaveisModificadas.add(varModificada);
+        }
+      }
+      
+      if (fimLaco > 0) {
+        // Identifica instruções invariantes
+        const instrucoesInvariantes = [];
+        for (const instrucao of instrucoesLaco) {
+          if (isInstrucaoInvariante(instrucao.linha, variaveisModificadas)) {
+            instrucoesInvariantes.push(instrucao);
+          }
+        }
+        
+        // Move instruções invariantes para antes do laço
+        if (instrucoesInvariantes.length > 0) {
+          // Adiciona instruções anteriores ao laço
+          for (let k = 0; k < i; k++) {
+            novocodigo.push(codigo[k]);
           }
           
-          // Substituir uso do destino pelo origem
-          resultado[j] = resultado[j].replace(
-            new RegExp(`\\b${destino}\\b`, 'g'),
-            origem
-          );
+          // Adiciona instruções invariantes movidas
+          for (const instrucao of instrucoesInvariantes) {
+            novocodigo.push(instrucao.linha);
+            originais[novocodigo.length - 1] = `// Movido do laço: ${instrucao.linha}`;
+            otimizacoes++;
+          }
+          
+          // Adiciona o label do laço
+          novocodigo.push(linha);
+          
+          // Adiciona instruções não-invariantes do laço
+          for (const instrucao of instrucoesLaco) {
+            if (!instrucoesInvariantes.includes(instrucao)) {
+              novocodigo.push(instrucao.linha);
+            }
+          }
+          
+          // Adiciona instruções após o laço
+          for (let k = fimLaco + 1; k < codigo.length; k++) {
+            novocodigo.push(codigo[k]);
+          }
+          
+          return { codigo: novocodigo, otimizacoes, originais };
         }
       }
     }
     
-    // Atualizar linha atual usando propagações anteriores
-    for (const [destino, origem] of copias.entries()) {
-      if (!linha.startsWith(`${destino} :=`)) {
-        resultado[i] = resultado[i].replace(
-          new RegExp(`\\b${destino}\\b`, 'g'),
-          origem
-        );
-      }
-    }
+    novocodigo.push(linha);
   }
-  
-  return resultado;
+
+  return { codigo: novocodigo, otimizacoes, originais };
 }
 
-/**
- * 4. Elimina desvios desnecessários (goto para o próximo label)
- * @param {string[]} codigo 
- * @returns {string[]}
- */
-function eliminarDesviosUnnecessarios(codigo) {
-  const resultado = [...codigo];
+// 7. Eliminação de Código Morto
+function eliminarCodigoMorto(codigo) {
+  const novocodigo = [];
+  let otimizacoes = 0;
+  let originais = {};
   
-  for (let i = 0; i < resultado.length - 1; i++) {
-    // Verificar se é um goto seguido pelo label para onde ele aponta
-    if (resultado[i].startsWith('goto L')) {
-      const label = resultado[i].substring(5).trim();
-      if (resultado[i + 1] === `${label}:`) {
-        resultado.splice(i, 1); // Remover o goto desnecessário
-        i--; // Ajustar índice
-      }
-    }
-    
-    // Remover goto após condição que nunca é executado
-    if (resultado[i].startsWith('goto') && resultado[i + 1].endsWith(':')) {
-      resultado.splice(i, 1);
-      i--;
-    }
-  }
-  
-  return resultado;
-}
-
-/**
- * 5. Aplica propriedades algébricas para simplificação
- * @param {string[]} codigo 
- * @returns {string[]}
- */
-function aplicarPropriedadesAlgebricas(codigo) {
-  const resultado = [];
-  
-  for (const linha of codigo) {
-    // Multiplicação por 1
-    if (linha.includes(' * 1')) {
-      const match = linha.match(/^(.*) := (.*) \* 1$/);
-      if (match) {
-        resultado.push(`${match[1]} := ${match[2]}`);
-        continue;
-      }
-    }
-    
-    // Multiplicação por 0
-    if (linha.includes(' * 0')) {
-      const match = linha.match(/^(.*) := (.*) \* 0$/);
-      if (match) {
-        resultado.push(`${match[1]} := 0`);
-        continue;
-      }
-    }
-    
-    // Adição com 0
-    if (linha.includes(' + 0')) {
-      const match = linha.match(/^(.*) := (.*) \+ 0$/);
-      if (match) {
-        resultado.push(`${match[1]} := ${match[2]}`);
-        continue;
-      }
-    }
-    
-    // Subtração de 0
-    if (linha.endsWith(' - 0')) {
-      const match = linha.match(/^(.*) := (.*) - 0$/);
-      if (match) {
-        resultado.push(`${match[1]} := ${match[2]}`);
-        continue;
-      }
-    }
-    
-    // Divisão por 1
-    if (linha.endsWith(' / 1')) {
-      const match = linha.match(/^(.*) := (.*) \/ 1$/);
-      if (match) {
-        resultado.push(`${match[1]} := ${match[2]}`);
-        continue;
-      }
-    }
-    
-    resultado.push(linha);
-  }
-  
-  return resultado;
-}
-
-/**
- * 6. Simplifica condições constantes
- * @param {string[]} codigo 
- * @returns {string[]}
- */
-function simplificarCondicoes(codigo) {
-  const resultado = [...codigo];
-  
-  for (let i = 0; i < resultado.length; i++) {
-    const linha = resultado[i];
-    
-    // Simplificar condições constantes
-    if (linha.startsWith('if ')) {
-      // Condição sempre verdadeira: x == x
-      const matchIgual = linha.match(/^if ([a-zA-Z0-9_]+) == \1 goto (.+)$/);
-      if (matchIgual) {
-        resultado[i] = `goto ${matchIgual[2]}`;
-        continue;
-      }
-      
-      // Condição sempre falsa: x != x
-      const matchDif = linha.match(/^if ([a-zA-Z0-9_]+) != \1 goto (.+)$/);
-      if (matchDif) {
-        resultado.splice(i, 1); // Remover a condição
-        i--;
-        continue;
-      }
-      
-      // Condições numéricas constantes
-      const matchNum = linha.match(/^if (\d+) ([<>=!]+) (\d+) goto (.+)$/);
-      if (matchNum) {
-        const num1 = parseInt(matchNum[1]);
-        const operador = matchNum[2];
-        const num2 = parseInt(matchNum[3]);
-        const label = matchNum[4];
-        
-        let resultado = false;
-        switch (operador) {
-          case '==': resultado = num1 === num2; break;
-          case '!=': resultado = num1 !== num2; break;
-          case '<': resultado = num1 < num2; break;
-          case '<=': resultado = num1 <= num2; break;
-          case '>': resultado = num1 > num2; break;
-          case '>=': resultado = num1 >= num2; break;
-        }
-        
-        if (resultado) {
-          resultado[i] = `goto ${label}`;
-        } else {
-          resultado.splice(i, 1); // Remover a condição
-          i--;
-        }
-      }
-    }
-  }
-  
-  return resultado;
-}
-
-/**
- * 7. Elimina código redundante (incluindo atribuições do tipo a := a)
- * @param {string[]} codigo 
- * @returns {string[]}
- */
-function eliminarCodigoRedundante(codigo) {
-  const resultado = [];
+  // Primeira passada: identifica variáveis usadas
+  const variaveisUsadas = new Set();
+  const variaveisDefinidas = new Map(); // variavel -> linha de definição
   
   for (let i = 0; i < codigo.length; i++) {
     const linha = codigo[i];
     
-    // Eliminar atribuições redundantes: x := x
-    const matchRedundante = linha.match(/^([a-zA-Z][a-zA-Z0-9_]*) := \1$/);
-    if (matchRedundante) {
-      continue; // Pular esta linha
-    }
+    // Identifica usos de variáveis (lado direito de atribuições, condições, etc.)
+    const usos = extrairVariaveisUsadas(linha);
+    usos.forEach(v => variaveisUsadas.add(v));
     
-    // Eliminar duplicação de labels adjacentes
-    if (linha.endsWith(':') && i > 0 && codigo[i-1].endsWith(':')) {
-      // Obter todos os gotos para este label e substituir pelo anterior
-      const labelAtual = linha.substring(0, linha.length - 1);
-      const labelAnterior = codigo[i-1].substring(0, codigo[i-1].length - 1);
-      
-      // Substituir todas as referências ao label atual pelo anterior
-      for (let j = 0; j < codigo.length; j++) {
-        if (codigo[j].includes(`goto ${labelAtual}`)) {
-          codigo[j] = codigo[j].replace(`goto ${labelAtual}`, `goto ${labelAnterior}`);
-        }
-      }
-      continue; // Pular este label
+    // Identifica definições de variáveis
+    const varDefinida = extrairVariavelAfetada(linha);
+    if (varDefinida && linha.includes(':=')) {
+      variaveisDefinidas.set(varDefinida, i);
     }
-    
-    resultado.push(linha);
   }
   
-  return resultado;
+  // Segunda passada: remove definições de variáveis não usadas
+  for (let i = 0; i < codigo.length; i++) {
+    const linha = codigo[i];
+    
+    // Verifica se é uma atribuição para variável não usada
+    const matchAtribuicao = linha.match(/^(\w+)\s*:=\s*(.+)$/);
+    if (matchAtribuicao) {
+      const [, variavel, expressao] = matchAtribuicao;
+      
+      // Se a variável nunca é usada e não é uma chamada de função
+      if (!variaveisUsadas.has(variavel) && !expressao.includes('call')) {
+        originais[novocodigo.length] = linha;
+        otimizacoes++;
+        continue; // Pula esta instrução (código morto)
+      }
+    }
+    
+    // Remove blocos condicionais sempre falsos
+    if (linha.includes('if ') && linha.includes('== 0 goto')) {
+      const condicao = extrairCondicao(linha);
+      if (isCondicaoSempreFalsa(condicao)) {
+        // Remove a instrução condicional
+        originais[novocodigo.length] = linha;
+        otimizacoes++;
+        continue;
+      }
+    }
+    
+    novocodigo.push(linha);
+  }
+
+  return { codigo: novocodigo, otimizacoes, originais };
+}
+
+// Funções auxiliares
+
+function extrairVariavelAfetada(linha) {
+  const matchAtribuicao = linha.match(/^(\w+)\s*:=/);
+  return matchAtribuicao ? matchAtribuicao[1] : null;
+}
+
+function extrairVariaveisUsadas(linha) {
+  const variaveis = new Set();
+  
+  // Não inclui a variável sendo atribuída (lado esquerdo)
+  const partes = linha.split(':=');
+  const ladoDireito = partes.length > 1 ? partes[1] : linha;
+  
+  // Extrai identificadores do lado direito
+  const matches = ladoDireito.match(/\b[a-zA-Z_]\w*\b/g);
+  if (matches) {
+    matches.forEach(match => {
+      // Filtra palavras-chave e operadores
+      if (!/^(if|goto|call|return)$/.test(match)) {
+        variaveis.add(match);
+      }
+    });
+  }
+  
+  return Array.from(variaveis);
+}
+
+function isInstrucaoInvariante(linha, variaveisModificadas) {
+  const matchAtribuicao = linha.match(/^(\w+)\s*:=\s*(.+)$/);
+  if (!matchAtribuicao) return false;
+  
+  const [, variavel, expressao] = matchAtribuicao;
+  
+  // Se a variável sendo atribuída é modificada no laço, não é invariante
+  if (variaveisModificadas.has(variavel)) return false;
+  
+  // Se a expressão usa variáveis modificadas no laço, não é invariante
+  const variaveisUsadas = extrairVariaveisUsadas(expressao);
+  for (const varUsada of variaveisUsadas) {
+    if (variaveisModificadas.has(varUsada)) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+function extrairCondicao(linha) {
+  const match = linha.match(/if\s+(.+?)\s+(==|!=|<|>|<=|>=)\s+(.+?)\s+goto/);
+  return match ? { esquerda: match[1], operador: match[2], direita: match[3] } : null;
+}
+
+function isCondicaoSempreFalsa(condicao) {
+  if (!condicao) return false;
+  
+  // Verifica condições obviamente falsas
+  const { esquerda, operador, direita } = condicao;
+  
+  // Casos como "x == 0" quando sabemos que x nunca é 0
+  // ou comparações entre constantes
+  if (/^\d+$/.test(esquerda) && /^\d+$/.test(direita)) {
+    const numEsq = parseInt(esquerda);
+    const numDir = parseInt(direita);
+    
+    switch (operador) {
+      case '==': return numEsq !== numDir;
+      case '!=': return numEsq === numDir;
+      case '<': return numEsq >= numDir;
+      case '>': return numEsq <= numDir;
+      case '<=': return numEsq > numDir;
+      case '>=': return numEsq < numDir;
+    }
+  }
+  
+  return false;
 }
