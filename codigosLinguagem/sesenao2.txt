@@ -1,0 +1,16 @@
+variavel x : inteiro;
+variavel y : inteiro;
+variavel z : inteiro;
+x = 2;
+y = 3;
+z = 5;
+x = x + y * z;
+
+se(x < y){
+   x = 1;
+   z = 123;
+}
+senao{
+   x = 3;
+   y = x + 123 + 0;
+}
