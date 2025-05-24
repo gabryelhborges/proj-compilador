@@ -1,0 +1,7 @@
+variavel x : inteiro = 0;
+
+enquanto(x < 10){
+   x = x + 1;
+}
+
+x = x + x;

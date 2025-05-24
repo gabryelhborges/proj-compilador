@@ -320,7 +320,13 @@ pre {
 }
 
 .linha-otimizada {
-  background: rgba(0, 123, 255, 0.1);
+  background: rgba(40, 167, 69, 0.1);
+  border-left: 3px solid #28a745;
+  padding-left: 5px;
+}
+
+.codigo-otimizado .codigo-container {
+  position: relative;
 }
 
 .linha-original {
@@ -342,4 +348,77 @@ pre {
   background: #1e1e1e;
   border-radius: 3px;
   border-left: 3px solid #333;
+}
+
+.optimization-badge {
+  background-color: #28a745;
+  margin-left: 3px;
+}
+
+.otimizacoes-detalhes {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #888;
+}
+
+/* Estilos para o código assembly SimpSIM */
+.codigo-assembly {
+  font-family: 'Courier New', monospace;
+  background: #1a1a1a;
+  color: #e0e0e0;
+}
+
+.linha-assembly {
+  line-height: 1.4;
+  padding: 1px 0;
+}
+
+.comentario-assembly {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.label-assembly {
+  color: #4fc3f7;
+  font-weight: bold;
+}
+
+.instrucao-assembly {
+  color: #ce9178;
+}
+
+.salto-assembly {
+  color: #c586c0;
+  font-weight: bold;
+}
+
+.halt-assembly {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.simpsim-info {
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #333;
+  border-left: 3px solid #4fc3f7;
+}
+
+.mapeamento-variaveis {
+  margin-top: 10px;
+}
+
+.mapeamento-variaveis details {
+  cursor: pointer;
+}
+
+.mapeamento-variaveis summary {
+  padding: 5px;
+  background: #444;
+  border-radius: 3px;
+  margin-bottom: 5px;
+}
+
+.mapeamento-variaveis table {
+  margin-top: 5px;
 }

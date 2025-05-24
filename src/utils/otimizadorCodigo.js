@@ -135,13 +135,22 @@ function propagarCopias(codigo) {
 
   const copias = new Map(); // variavel -> valor copiado
   const usosVariaveis = new Map(); // variavel -> número de usos
+  const variaveisModificadas = new Set(); // variáveis que são modificadas após suas cópias
 
-  // Primeira passada: contar usos de variáveis
-  for (const linha of codigo) {
+  // Primeira passada: contar usos de variáveis e identificar modificações
+  for (let i = 0; i < codigo.length; i++) {
+    const linha = codigo[i].trim();
     const variaveisUsadas = extrairVariaveisUsadas(linha);
     variaveisUsadas.forEach(v => {
       usosVariaveis.set(v, (usosVariaveis.get(v) || 0) + 1);
     });
+
+    // Identificar variáveis que são modificadas (lado esquerdo de atribuições)
+    const matchAtribuicao = linha.match(/^(\w+)\s*:=/);
+    if (matchAtribuicao) {
+      const [, variavel] = matchAtribuicao;
+      variaveisModificadas.add(variavel);
+    }
   }
 
   for (let i = 0; i < novodoCodigo.length; i++) {
@@ -153,15 +162,18 @@ function propagarCopias(codigo) {
     if (matchCopia) {
       const [, variavel, valor] = matchCopia;
       
-      // Verificar se a variável é usada apenas uma vez (pode ser eliminada)
-      if (usosVariaveis.get(variavel) === 1) {
+      // Verificar se a variável é usada apenas uma vez E não é modificada posteriormente
+      if (usosVariaveis.get(variavel) === 1 && !isVariavelModificadaPosteriormente(variavel, i, codigo)) {
         copias.set(variavel, valor);
         // Marcar linha para remoção
         otimizacoesOriginais[i] = linha;
         novodoCodigo[i] = ''; // Linha vazia será removida depois
         otimizacoes++;
       } else {
-        copias.set(variavel, valor);
+        // Só adicionar à cópia se a variável não for modificada posteriormente
+        if (!isVariavelModificadaPosteriormente(variavel, i, codigo)) {
+          copias.set(variavel, valor);
+        }
       }
       continue;
     }
@@ -203,6 +215,21 @@ function propagarCopias(codigo) {
   return { codigo: codigoFiltrado, otimizacoes, originais: otimizacoesOriginais };
 }
 
+// Função auxiliar para verificar se uma variável é modificada após uma determinada linha
+function isVariavelModificadaPosteriormente(variavel, linhaAtual, codigo) {
+  for (let i = linhaAtual + 1; i < codigo.length; i++) {
+    const linha = codigo[i].trim();
+    const matchAtribuicao = linha.match(/^(\w+)\s*:=/);
+    if (matchAtribuicao) {
+      const [, varModificada] = matchAtribuicao;
+      if (varModificada === variavel) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // 3. Eliminação de Código Redundante
 function eliminarCodigoRedundante(codigo) {
   const novodoCodigo = [...codigo];
@@ -241,6 +268,7 @@ function eliminarCodigoRedundante(codigo) {
 }
 
 // 4. Uso de Propriedades Algébricas
+// 4. Uso de Propriedades Algébricas
 function aplicarPropriedadesAlgebricas(codigo) {
   const novodoCodigo = [...codigo];
   const otimizacoesOriginais = {};
@@ -259,30 +287,50 @@ function aplicarPropriedadesAlgebricas(codigo) {
       // Aplicar propriedades algébricas
       switch (operador) {
         case '+':
+          // x + 0 = x ou 0 + x = x
           if (operando2 === '0') {
             novaLinha = `${variavel} := ${operando1}`;
           } else if (operando1 === '0') {
             novaLinha = `${variavel} := ${operando2}`;
           }
+          // Propriedade comutativa: se x + y já existe, normalizar como y + x
+          // (isso será tratado implicitamente pelas outras otimizações)
           break;
+        
         case '-':
+          // x - 0 = x
           if (operando2 === '0') {
             novaLinha = `${variavel} := ${operando1}`;
           }
           break;
+        
         case '*':
+          // x * 1 = x ou 1 * x = x
           if (operando2 === '1') {
             novaLinha = `${variavel} := ${operando1}`;
           } else if (operando1 === '1') {
             novaLinha = `${variavel} := ${operando2}`;
-          } else if (operando2 === '0' || operando1 === '0') {
+          }
+          // x * 0 = 0 ou 0 * x = 0
+          else if (operando2 === '0' || operando1 === '0') {
             novaLinha = `${variavel} := 0`;
           }
+          // 2 * x = x + x
+          else if (operando1 === '2') {
+            novaLinha = `${variavel} := ${operando2} + ${operando2}`;
+          } else if (operando2 === '2') {
+            novaLinha = `${variavel} := ${operando1} + ${operando1}`;
+          }
           break;
+        
         case '/':
+          // x / 1 = x
           if (operando2 === '1') {
             novaLinha = `${variavel} := ${operando1}`;
           }
+          break;
+        
+        default:
           break;
       }
 

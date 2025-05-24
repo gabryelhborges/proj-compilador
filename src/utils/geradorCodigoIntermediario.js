@@ -3,14 +3,15 @@ import { otimizarCodigo } from './otimizadorCodigo.js';
 export function gerarCodigoIntermediario(tokens, tabelaSimbolos, aplicarOtimizacao = true) {
   if (!Array.isArray(tokens) || tokens.length === 0) {
     return {
-      codigo: [],
+      codigoOriginal: [],
+      codigoOtimizado: [],
       otimizacoes: { realizadas: 0, originais: {} }
     };
   }
 
   const codigoIntermediario = [];
-  const tempCountObj = { value: 1 }; // Contador unificado para variáveis temporárias
-  let labelCount = 1; // Contador para rótulos (L1, L2, ...)
+  const tempCountObj = { value: 1 };
+  let labelCount = 1;
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
@@ -77,23 +78,15 @@ export function gerarCodigoIntermediario(tokens, tabelaSimbolos, aplicarOtimizac
     }
   }
 
-  // Aplicar otimizações se solicitado
-  if (aplicarOtimizacao) {
-    const resultado = otimizarCodigo(codigoIntermediario);
-    return {
-      codigo: resultado.codigo,
-      otimizacoes: {
-        realizadas: resultado.otimizacoesRealizadas,
-        originais: resultado.otimizacoesOriginais
-      }
-    };
-  }
-  
+  // Aplicar otimizações
+  const resultado = otimizarCodigo(codigoIntermediario);
+
   return {
-    codigo: codigoIntermediario,
+    codigoOriginal: codigoIntermediario,
+    codigoOtimizado: resultado.codigo,
     otimizacoes: {
-      realizadas: 0,
-      originais: {}
+      realizadas: resultado.otimizacoesRealizadas,
+      originais: resultado.otimizacoesOriginais
     }
   };
 }
@@ -108,30 +101,30 @@ function processarDeclaracaoVariavel(indice, tokens, tempCountObj) {
   }
 
   i++; // Pula 'variavel'
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_identificador') {
     return { instrucoes: [], novoIndice: i };
   }
-  
+
   const variavel = tokens[i].lexema;
   i++; // Pula identificador
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_dois_pontos') {
     return { instrucoes: [], novoIndice: i };
   }
-  
+
   i++; // Pula ':'
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_tipo') {
     return { instrucoes: [], novoIndice: i };
   }
-  
+
   i++; // Pula tipo
-  
+
   // Verifica se há inicialização
   if (tokens[i]?.tipo === 't_atribuicao') {
     i++; // Pula '='
-    
+
     if (tokens[i]) {
       const resultado = processarExpressao(i, tokens, null, tempCountObj);
       instrucoes.push(...resultado.instrucao);
@@ -139,12 +132,12 @@ function processarDeclaracaoVariavel(indice, tokens, tempCountObj) {
       i = resultado.novoIndice;
     }
   }
-  
+
   // Pula ';' se existir
   if (tokens[i]?.tipo === 't_pv') {
     i++;
   }
-  
+
   return { instrucoes, novoIndice: i };
 }
 
@@ -152,21 +145,21 @@ function processarDeclaracaoVariavel(indice, tokens, tempCountObj) {
 function processarAtribuicao(indice, tokens, tabelaSimbolos, tempCountObj) {
   const instrucoes = [];
   let i = indice;
-  
+
   const variavel = tokens[i].lexema;
   i += 2; // Pula identificador e '='
-  
+
   const resultado = processarExpressao(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...resultado.instrucao);
   instrucoes.push(`${variavel} := ${resultado.resultado}`);
-  
+
   i = resultado.novoIndice;
-  
+
   // Pula ';' se existir
   if (tokens[i]?.tipo === 't_pv') {
     i++;
   }
-  
+
   return { instrucoes, novoIndice: i };
 }
 
@@ -177,27 +170,27 @@ function processarEstruturase(indice, tokens, tabelaSimbolos, tempCountObj, labe
   let currentLabelCount = labelCount;
 
   i++; // Pula 'se'
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_abre_par') {
     return { instrucoes: [], novoIndice: i, novoLabelCount: currentLabelCount };
   }
-  
+
   i++; // Pula '('
-  
+
   // Processa condição
   const condicao = processarCondicao(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...condicao.instrucoes);
   i = condicao.novoIndice;
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_fecha_par') {
     return { instrucoes: [], novoIndice: i, novoLabelCount: currentLabelCount };
   }
-  
+
   i++; // Pula ')'
-  
+
   const labelElse = `L${currentLabelCount++}`;
   const labelEnd = `L${currentLabelCount++}`;
-  
+
   // Salto condicional: se a condição for FALSA, vai para o else
   if (condicao.operador) {
     // Inverte a condição para saltar quando for falsa
@@ -206,28 +199,28 @@ function processarEstruturase(indice, tokens, tabelaSimbolos, tempCountObj, labe
   } else {
     instrucoes.push(`if ${condicao.operandoEsquerdo} == 0 goto ${labelElse}`);
   }
-  
+
   // Processa bloco if
   const blocoIf = processarBloco(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...blocoIf.instrucoes);
   i = blocoIf.novoIndice;
-  
+
   // Verifica se há bloco else
   if (tokens[i]?.tipo === 't_senao') {
     instrucoes.push(`goto ${labelEnd}`); // Pula o bloco else
     instrucoes.push(`${labelElse}:`); // Label do else
-    
+
     i++; // Pula 'senao'
-    
+
     const blocoElse = processarBloco(i, tokens, tabelaSimbolos, tempCountObj);
     instrucoes.push(...blocoElse.instrucoes);
     i = blocoElse.novoIndice;
-    
+
     instrucoes.push(`${labelEnd}:`); // Label do fim
   } else {
     instrucoes.push(`${labelElse}:`); // Label para caso não haja else
   }
-  
+
   return { instrucoes, novoIndice: i, novoLabelCount: currentLabelCount };
 }
 
@@ -238,29 +231,29 @@ function processarEstruturaWhile(indice, tokens, tabelaSimbolos, tempCountObj, l
   let currentLabelCount = labelCount;
 
   i++; // Pula 'enquanto'
-  
+
   const labelInicio = `L${currentLabelCount++}`;
   const labelFim = `L${currentLabelCount++}`;
-  
+
   instrucoes.push(`${labelInicio}:`);
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_abre_par') {
     return { instrucoes: [], novoIndice: i, novoLabelCount: currentLabelCount };
   }
-  
+
   i++; // Pula '('
-  
+
   // Processa condição
   const condicao = processarCondicao(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...condicao.instrucoes);
   i = condicao.novoIndice;
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_fecha_par') {
     return { instrucoes: [], novoIndice: i, novoLabelCount: currentLabelCount };
   }
-  
+
   i++; // Pula ')'
-  
+
   // Salto condicional direto para fim do loop
   if (condicao.operador) {
     // Inverte a condição para sair do loop quando a condição for falsa
@@ -269,15 +262,15 @@ function processarEstruturaWhile(indice, tokens, tabelaSimbolos, tempCountObj, l
   } else {
     instrucoes.push(`if ${condicao.operandoEsquerdo} == 0 goto ${labelFim}`);
   }
-  
+
   // Processa bloco do while
   const bloco = processarBloco(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...bloco.instrucoes);
   i = bloco.novoIndice;
-  
+
   instrucoes.push(`goto ${labelInicio}`); // Volta para o início
   instrucoes.push(`${labelFim}:`); // Label do fim
-  
+
   return { instrucoes, novoIndice: i, novoLabelCount: currentLabelCount };
 }
 
@@ -301,34 +294,34 @@ function processarEstruturaFor(indice, tokens, tabelaSimbolos, tempCountObj, lab
   let currentLabelCount = labelCount;
 
   i++; // Pula 'para'
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_abre_par') {
     return { instrucoes: [], novoIndice: i, novoLabelCount: currentLabelCount };
   }
-  
+
   i++; // Pula '('
-  
+
   // Processa inicialização
   const inicializacao = processarAtribuicao(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...inicializacao.instrucoes);
   i = inicializacao.novoIndice;
-  
+
   const labelInicio = `L${currentLabelCount++}`;
   const labelFim = `L${currentLabelCount++}`;
-  
+
   instrucoes.push(`${labelInicio}:`);
-  
+
   // Processa condição
   const condicao = processarCondicao(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...condicao.instrucoes);
   i = condicao.novoIndice;
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_pv') {
     return { instrucoes: [], novoIndice: i, novoLabelCount: currentLabelCount };
   }
-  
+
   i++; // Pula ';'
-  
+
   // Salto condicional para fim do loop
   if (condicao.operador) {
     const operadorInverso = inverterOperador(condicao.operador);
@@ -336,33 +329,33 @@ function processarEstruturaFor(indice, tokens, tabelaSimbolos, tempCountObj, lab
   } else {
     instrucoes.push(`if ${condicao.operandoEsquerdo} == 0 goto ${labelFim}`);
   }
-  
+
   // Salva posição do incremento para processar depois
   const inicioIncremento = i;
-  
+
   // Pula incremento para processar bloco primeiro
   while (i < tokens.length && tokens[i].tipo !== 't_fecha_par') {
     i++;
   }
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_fecha_par') {
     return { instrucoes: [], novoIndice: i, novoLabelCount: currentLabelCount };
   }
-  
+
   i++; // Pula ')'
-  
+
   // Processa bloco do for
   const bloco = processarBloco(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...bloco.instrucoes);
   i = bloco.novoIndice;
-  
+
   // Agora processa incremento
   const incremento = processarAtribuicao(inicioIncremento, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...incremento.instrucoes);
-  
+
   instrucoes.push(`goto ${labelInicio}`); // Volta para o início
   instrucoes.push(`${labelFim}:`); // Label do fim
-  
+
   return { instrucoes, novoIndice: i, novoLabelCount: currentLabelCount };
 }
 
@@ -370,32 +363,32 @@ function processarEstruturaFor(indice, tokens, tabelaSimbolos, tempCountObj, lab
 function processarCondicao(indice, tokens, tabelaSimbolos, tempCountObj) {
   const instrucoes = [];
   let i = indice;
-  
+
   // Processa primeira expressão
   const expr1 = processarExpressao(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...expr1.instrucao);
   i = expr1.novoIndice;
-  
+
   if (!tokens[i] || !['t_menor', 't_maior', 't_igualdade', 't_menor_igual', 't_maior_igual'].includes(tokens[i].tipo)) {
     // Condição simples (apenas uma expressão)
     return { instrucoes, resultado: expr1.resultado, novoIndice: i };
   }
-  
+
   const operador = tokens[i].lexema;
   i++; // Pula operador
-  
+
   // Processa segunda expressão
   const expr2 = processarExpressao(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...expr2.instrucao);
   i = expr2.novoIndice;
-  
+
   // Retorna os operandos separadamente em vez de criar uma variável temporária
-  return { 
-    instrucoes, 
+  return {
+    instrucoes,
     operandoEsquerdo: expr1.resultado,
     operador: operador,
     operandoDireito: expr2.resultado,
-    novoIndice: i 
+    novoIndice: i
   };
 }
 
@@ -403,16 +396,16 @@ function processarCondicao(indice, tokens, tabelaSimbolos, tempCountObj) {
 function processarBloco(indice, tokens, tabelaSimbolos, tempCountObj) {
   const instrucoes = [];
   let i = indice;
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_abre_chave') {
     return { instrucoes: [], novoIndice: i };
   }
-  
+
   i++; // Pula '{'
-  
+
   while (i < tokens.length && tokens[i].tipo !== 't_fecha_chave') {
     const token = tokens[i];
-    
+
     if (token.tipo === 't_identificador' && tokens[i + 1]?.tipo === 't_atribuicao') {
       const resultado = processarAtribuicao(i, tokens, tabelaSimbolos, tempCountObj);
       instrucoes.push(...resultado.instrucoes);
@@ -433,11 +426,11 @@ function processarBloco(indice, tokens, tabelaSimbolos, tempCountObj) {
       i++; // Pula tokens não reconhecidos
     }
   }
-  
+
   if (tokens[i]?.tipo === 't_fecha_chave') {
     i++; // Pula '}'
   }
-  
+
   return { instrucoes, novoIndice: i };
 }
 
@@ -446,7 +439,7 @@ function processarExpressao(indice, tokens, tabelaSimbolos, tempCountObj) {
   function parseExpressao(i) {
     let { instrucao, resultado, novoIndice } = parseTermo(i);
     i = novoIndice;
-    
+
     while (i < tokens.length && (tokens[i].tipo === 't_soma' || tokens[i].tipo === 't_subtracao')) {
       const operador = tokens[i].lexema;
       i++;
@@ -457,14 +450,14 @@ function processarExpressao(indice, tokens, tabelaSimbolos, tempCountObj) {
       resultado = tempVar;
       i = termo.novoIndice;
     }
-    
+
     return { instrucao, resultado, novoIndice: i };
   }
 
   function parseTermo(i) {
     let { instrucao, resultado, novoIndice } = parseFator(i);
     i = novoIndice;
-    
+
     while (i < tokens.length && (tokens[i].tipo === 't_multiplicacao' || tokens[i].tipo === 't_divisao')) {
       const operador = tokens[i].lexema;
       i++;
@@ -475,7 +468,7 @@ function processarExpressao(indice, tokens, tabelaSimbolos, tempCountObj) {
       resultado = tempVar;
       i = fator.novoIndice;
     }
-    
+
     return { instrucao, resultado, novoIndice: i };
   }
 
@@ -483,9 +476,9 @@ function processarExpressao(indice, tokens, tabelaSimbolos, tempCountObj) {
     if (!tokens[i]) {
       return { instrucao: [], resultado: '', novoIndice: i };
     }
-    
+
     const token = tokens[i];
-    
+
     if (token.tipo === 't_abre_par') {
       i++;
       const expr = parseExpressao(i);
@@ -502,7 +495,7 @@ function processarExpressao(indice, tokens, tabelaSimbolos, tempCountObj) {
     ) {
       return { instrucao: [], resultado: token.lexema, novoIndice: i + 1 };
     }
-    
+
     return { instrucao: [], resultado: '', novoIndice: i + 1 };
   }
 
@@ -513,40 +506,40 @@ function processarExpressao(indice, tokens, tabelaSimbolos, tempCountObj) {
 function processarChamadaFuncao(indice, tokens, tabelaSimbolos, tempCountObj) {
   const instrucoes = [];
   let i = indice;
-  
+
   const nomeFuncao = tokens[i].lexema;
   i += 2; // Pula identificador e '('
-  
+
   const argumentos = [];
-  
+
   // Processa argumentos
   while (i < tokens.length && tokens[i].tipo !== 't_fecha_par') {
     if (tokens[i].tipo === 't_virgula') {
       i++;
       continue;
     }
-    
+
     const argumento = processarExpressao(i, tokens, tabelaSimbolos, tempCountObj);
     instrucoes.push(...argumento.instrucao);
     argumentos.push(argumento.resultado);
     i = argumento.novoIndice;
   }
-  
+
   if (tokens[i]?.tipo === 't_fecha_par') {
     i++; // Pula ')'
   }
-  
+
   // Gera chamada de função
   if (argumentos.length === 0) {
     instrucoes.push(`call ${nomeFuncao}`);
   } else {
     instrucoes.push(`call ${nomeFuncao}(${argumentos.join(', ')})`);
   }
-  
+
   if (tokens[i]?.tipo === 't_pv') {
     i++; // Pula ';'
   }
-  
+
   return { instrucoes, novoIndice: i };
 }
 
@@ -554,38 +547,38 @@ function processarChamadaFuncao(indice, tokens, tabelaSimbolos, tempCountObj) {
 function processarDeclaracaoFuncao(indice, tokens, tabelaSimbolos, tempCountObj) {
   const instrucoes = [];
   let i = indice;
-  
+
   i++; // Pula 'funcao'
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_identificador') {
     return { instrucoes: [], novoIndice: i };
   }
-  
+
   const nomeFuncao = tokens[i].lexema;
   i++; // Pula identificador
-  
+
   instrucoes.push(`${nomeFuncao}:`);
-  
+
   if (!tokens[i] || tokens[i].tipo !== 't_abre_par') {
     return { instrucoes: [], novoIndice: i };
   }
-  
+
   i++; // Pula '('
-  
+
   // Pula parâmetros (já processados pelo analisador semântico)
   while (i < tokens.length && tokens[i].tipo !== 't_fecha_par') {
     i++;
   }
-  
+
   if (tokens[i]?.tipo === 't_fecha_par') {
     i++; // Pula ')'
   }
-  
+
   // Processa corpo da função
   const corpo = processarBloco(i, tokens, tabelaSimbolos, tempCountObj);
   instrucoes.push(...corpo.instrucoes);
   i = corpo.novoIndice;
-  
+
   return { instrucoes, novoIndice: i };
 }
 
@@ -593,9 +586,9 @@ function processarDeclaracaoFuncao(indice, tokens, tabelaSimbolos, tempCountObj)
 function processarReturn(indice, tokens, tabelaSimbolos, tempCountObj) {
   const instrucoes = [];
   let i = indice;
-  
+
   i++; // Pula 'retornar'
-  
+
   if (i < tokens.length && tokens[i].tipo !== 't_pv') {
     const expressao = processarExpressao(i, tokens, tabelaSimbolos, tempCountObj);
     instrucoes.push(...expressao.instrucao);
@@ -604,10 +597,10 @@ function processarReturn(indice, tokens, tabelaSimbolos, tempCountObj) {
   } else {
     instrucoes.push(`return`);
   }
-  
+
   if (tokens[i]?.tipo === 't_pv') {
     i++; // Pula ';'
   }
-  
+
   return { instrucoes, novoIndice: i };
 }

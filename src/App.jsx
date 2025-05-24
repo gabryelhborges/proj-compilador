@@ -9,6 +9,7 @@ import { analisarCodigo } from './utils/analisadorLexico.js';
 import { analisarSintatico } from './utils/analisadorSintatico.js';
 import { analisarSemantico } from './utils/analisadorSemantico.js';
 import { gerarCodigoIntermediario } from './utils/geradorCodigoIntermediario.js';
+import { traduzirParaSimpSIM } from './utils/tradutorSimpSIM.js';
 
 function App() {
   const [código, setCódigo] = useState('');
@@ -77,7 +78,16 @@ function App() {
         if (errosSemanticos.length === 0) {
           // Geração de código intermediário
           const codIntermediario = gerarCodigoIntermediario(novosTokens, simbolos);
-          setCodigoIntermediario(codIntermediario);
+          
+          // Tradução para SimpSIM
+          const traduzido = traduzirParaSimpSIM(codIntermediario.codigoOtimizado);
+          
+          setCodigoIntermediario({
+            ...codIntermediario,
+            codigoSimpSIM: traduzido.codigoAssembly,
+            mapeamentoVariaveis: traduzido.mapeamentoVariaveis,
+            informacoesTradução: traduzido.informacoes
+          });
         }
       }
       setTokens(novosTokens);
@@ -91,6 +101,23 @@ function App() {
       setAnalisando(false);
     }
   }, [código]);
+
+  // Função para exportar código assembly SimpSIM
+  const exportarSimpSIM = useCallback(() => {
+    if (!codigoIntermediario.codigoSimpSIM || codigoIntermediario.codigoSimpSIM.length === 0) {
+      alert('Nenhum código SimpSIM disponível para exportar.');
+      return;
+    }
+
+    const conteudo = codigoIntermediario.codigoSimpSIM.join('\n');
+    const blob = new Blob([conteudo], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'codigo_simpsim.asm';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [codigoIntermediario]);
 
   // Funções para gerenciamento de arquivos
   const handleAbrirArquivo = () => {
@@ -155,6 +182,13 @@ function App() {
         <button onClick={handleAbrirArquivo}>Abrir Arquivo</button>
         <button onClick={handleSalvar}>Salvar</button>
         <button onClick={handleSalvarComo}>Salvar Como</button>
+        <button 
+          onClick={exportarSimpSIM}
+          disabled={!codigoIntermediario.codigoSimpSIM || codigoIntermediario.codigoSimpSIM.length === 0}
+          style={{ marginLeft: '20px', backgroundColor: '#28a745' }}
+        >
+          Exportar SimpSIM (.asm)
+        </button>
         <input
           type="file"
           ref={fileInputRef}

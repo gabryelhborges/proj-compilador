@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 
 const SaidaAnalise = ({ tokens, erros, tabelaSimbolos, codigoIntermediario }) => {
   const [abaAtiva, setAbaAtiva] = useState('tokens');
-  const [mostrarOriginal, setMostrarOriginal] = useState(false);
 
   // Função para classificar erros
   const classificarErro = (erro) => {
@@ -42,11 +41,27 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos, codigoIntermediario }) =>
           Tabela de Símbolos {tabelaSimbolos.length > 0 && <span className="badge">{tabelaSimbolos.length}</span>}
         </button>
         <button
-          className={abaAtiva === 'codigo' ? 'active' : ''}
-          onClick={() => setAbaAtiva('codigo')}
+          className={abaAtiva === 'codigoOriginal' ? 'active' : ''}
+          onClick={() => setAbaAtiva('codigoOriginal')}
         >
-          Código Intermediário {codigoIntermediario.codigo && codigoIntermediario.codigo.length > 0 && 
-            <span className="badge">{codigoIntermediario.codigo.length}</span>}
+          Código Intermediário {codigoIntermediario?.codigoOriginal?.length > 0 && 
+            <span className="badge">{codigoIntermediario.codigoOriginal.length}</span>}
+        </button>
+        <button
+          className={abaAtiva === 'codigoOtimizado' ? 'active' : ''}
+          onClick={() => setAbaAtiva('codigoOtimizado')}
+        >
+          Código Otimizado {codigoIntermediario?.codigoOtimizado?.length > 0 && 
+            <span className="badge">{codigoIntermediario.codigoOtimizado.length}</span>}
+          {codigoIntermediario?.otimizacoes?.realizadas > 0 && 
+            <span className="badge optimization-badge">{codigoIntermediario.otimizacoes.realizadas}</span>}
+        </button>
+        <button
+          className={abaAtiva === 'simpSIM' ? 'active' : ''}
+          onClick={() => setAbaAtiva('simpSIM')}
+        >
+          Assembly SimpSIM {codigoIntermediario?.codigoSimpSIM?.length > 0 && 
+            <span className="badge">{codigoIntermediario.codigoSimpSIM.length}</span>}
         </button>
       </div>
 
@@ -73,13 +88,10 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos, codigoIntermediario }) =>
             <pre>
               {Array.isArray(erros) && erros.length > 0
                 ? erros.map((err, idx) => (
-                  <div
-                    key={idx}
-                    className={classificarErro(err)}
-                  >
-                    {err}
-                  </div>
-                ))
+                    <div key={idx} className={classificarErro(err)}>
+                      {err}
+                    </div>
+                  ))
                 : 'Nenhum erro encontrado.'}
             </pre>
           </div>
@@ -88,7 +100,7 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos, codigoIntermediario }) =>
         {abaAtiva === 'simbolos' && (
           <div className="symbols">
             <h3>Tabela de Símbolos</h3>
-            {tabelaSimbolos && tabelaSimbolos.length > 0 ? (
+            {Array.isArray(tabelaSimbolos) && tabelaSimbolos.length > 0 ? (
               <table className="symbol-table">
                 <thead>
                   <tr>
@@ -121,56 +133,122 @@ const SaidaAnalise = ({ tokens, erros, tabelaSimbolos, codigoIntermediario }) =>
           </div>
         )}
 
-        {abaAtiva === 'codigo' && (
+        {abaAtiva === 'codigoOriginal' && (
           <div className="codigo-intermediario">
-            <h3>Código Intermediário (Representação de Três Endereços)</h3>
-            {codigoIntermediario && codigoIntermediario.codigo && (
+            <h3>Código Intermediário Original</h3>
+            {codigoIntermediario?.codigoOriginal && codigoIntermediario.codigoOriginal.length > 0 ? (
+              <pre className="codigo-container">
+                {codigoIntermediario.codigoOriginal.map((linha, idx) => (
+                  <div key={idx}>
+                    {linha}
+                  </div>
+                ))}
+              </pre>
+            ) : (
+              <p>Nenhum código intermediário gerado.</p>
+            )}
+          </div>
+        )}
+
+        {abaAtiva === 'codigoOtimizado' && (
+          <div className="codigo-otimizado">
+            <h3>Código Intermediário Otimizado</h3>
+            {codigoIntermediario?.codigoOtimizado && codigoIntermediario.codigoOtimizado.length > 0 ? (
               <>
                 <div className="otimizacoes-info">
                   <p>
-                    Otimizações aplicadas: {codigoIntermediario.otimizacoes.realizadas}
-                    <button 
-                      className="btn-toggle-original"
-                      onClick={() => setMostrarOriginal(!mostrarOriginal)}>
-                      {mostrarOriginal ? 'Ocultar Código Original' : 'Mostrar Código Original'}
-                    </button>
+                    <strong>Otimizações aplicadas:</strong> {codigoIntermediario.otimizacoes?.realizadas || 0}
                   </p>
+                  {codigoIntermediario.otimizacoes?.realizadas > 0 && (
+                    <div className="otimizacoes-detalhes">
+                      <p><small>As linhas destacadas foram otimizadas</small></p>
+                    </div>
+                  )}
                 </div>
                 <pre className="codigo-container">
-                  {mostrarOriginal ? (
-                    // Exibir comparação entre original e otimizado
-                    codigoIntermediario.codigo.map((linha, idx) => {
-                      const original = codigoIntermediario.otimizacoes.originais[idx];
-                      return (
-                        <div key={idx} className={original ? "linha-otimizada" : ""}>
-                          {original ? (
-                            <>
-                              <span className="linha-original">{original}</span>
-                              <span className="seta-otimizacao">→</span> 
-                              <span className="linha-nova">{linha}</span>
-                            </>
-                          ) : (
-                            linha
-                          )}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    // Exibir apenas código otimizado
-                    codigoIntermediario.codigo.map((linha, idx) => (
+                  {codigoIntermediario.codigoOtimizado.map((linha, idx) => {
+                    // Verificar se essa linha foi otimizada comparando com o original
+                    const foiOtimizada = codigoIntermediario.codigoOriginal && 
+                      idx < codigoIntermediario.codigoOriginal.length &&
+                      codigoIntermediario.codigoOriginal[idx] !== linha;
+                    
+                    return (
                       <div 
                         key={idx} 
-                        className={codigoIntermediario.otimizacoes.originais[idx] ? "linha-otimizada" : ""}
+                        className={foiOtimizada ? "linha-otimizada" : ""}
+                        title={foiOtimizada ? `Original: ${codigoIntermediario.codigoOriginal[idx]}` : ''}
                       >
                         {linha}
                       </div>
-                    ))
-                  )}
+                    );
+                  })}
                 </pre>
               </>
+            ) : (
+              <p>Nenhum código otimizado gerado.</p>
             )}
-            {(!codigoIntermediario || !codigoIntermediario.codigo || codigoIntermediario.codigo.length === 0) && (
-              <p>Nenhum código intermediário gerado.</p>
+          </div>
+        )}
+
+        {abaAtiva === 'simpSIM' && (
+          <div className="codigo-simpsim">
+            <h3>Assembly SimpSIM</h3>
+            {codigoIntermediario?.codigoSimpSIM && codigoIntermediario.codigoSimpSIM.length > 0 ? (
+              <>
+                <div className="simpsim-info">
+                  <p>
+                    <strong>Código traduzido para SimpSIM Assembly</strong>
+                  </p>
+                  <p><small>{codigoIntermediario.informacoesTradução}</small></p>
+                  {codigoIntermediario.mapeamentoVariaveis && (
+                    <div className="mapeamento-variaveis">
+                      <details>
+                        <summary>Mapeamento de Variáveis</summary>
+                        <table className="symbol-table">
+                          <thead>
+                            <tr>
+                              <th>Variável</th>
+                              <th>Registrador</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(codigoIntermediario.mapeamentoVariaveis).map(([variavel, registrador], idx) => (
+                              <tr key={idx}>
+                                <td>{variavel}</td>
+                                <td>{registrador}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </details>
+                    </div>
+                  )}
+                </div>
+                <pre className="codigo-container codigo-assembly">
+                  {codigoIntermediario.codigoSimpSIM.map((linha, idx) => {
+                    let classeCSS = '';
+                    if (linha.startsWith(';')) {
+                      classeCSS = 'comentario-assembly';
+                    } else if (linha.endsWith(':')) {
+                      classeCSS = 'label-assembly';
+                    } else if (linha.trim().startsWith('load') || linha.trim().startsWith('move') || linha.trim().startsWith('addi')) {
+                      classeCSS = 'instrucao-assembly';
+                    } else if (linha.trim().startsWith('jmp') || linha.trim().startsWith('jmpEQ') || linha.trim().startsWith('jmpLE')) {
+                      classeCSS = 'salto-assembly';
+                    } else if (linha.trim() === 'halt') {
+                      classeCSS = 'halt-assembly';
+                    }
+                    
+                    return (
+                      <div key={idx} className={`linha-assembly ${classeCSS}`}>
+                        {linha}
+                      </div>
+                    );
+                  })}
+                </pre>
+              </>
+            ) : (
+              <p>Nenhum código SimpSIM gerado. Execute a análise de um código sem erros primeiro.</p>
             )}
           </div>
         )}
