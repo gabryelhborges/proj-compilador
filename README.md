@@ -25,7 +25,6 @@ Um compilador completo desenvolvido em React que realiza análise léxica, sint�
 - [⚡ Otimizações](#-otimizações)
 - [🎯 Assembly SimpSIM](#-assembly-simpsim)
 - [📁 Estrutura do Projeto](#-estrutura-do-projeto)
-- [🤝 Contribuindo](#-contribuindo)
 
 ## 🎯 Visão Geral
 
